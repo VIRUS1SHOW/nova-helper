@@ -90,7 +90,7 @@ func TestAskOpenAICompatible(t *testing.T) {
 		t.Errorf("ответ: %q", CleanAnswer(ans))
 	}
 	c2 := AIConfig{Provider: "deepseek", Key: "k2", BaseURL: srv.URL + "/v1"}
-	if _, err := AskAI(c2, "тест", "ctx"); err != nil || gotAuth != "Bearer k2" || gotModel != "deepseek-chat" {
+	if _, err := AskAI(c2, "тест", "ctx"); err != nil || gotAuth != "Bearer k2" || gotModel != "deepseek-flash" {
 		t.Errorf("deepseek: %v %q %q", err, gotAuth, gotModel)
 	}
 }
