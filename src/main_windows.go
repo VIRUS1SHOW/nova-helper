@@ -1,6 +1,6 @@
 package main
 
-// Справочник Nova RP — окно с правилами, горячая клавиша и значок в трее.
+// Nova Helper — окно с правилами, горячая клавиша и значок в трее.
 
 import (
 	"fmt"
@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	appTitle      = "Справочник Nova RP"
-	className     = "NovaRPSpravochnikWnd"
-	autostartName = "NovaRP Spravochnik"
+	appTitle      = "Nova Helper"
+	className     = "NovaHelperWnd"
+	autostartName = "Nova Helper"
 
 	idEdit = 101
 	idList = 102
@@ -125,7 +125,7 @@ func main() {
 	var e error
 	for i := 0; ; i++ {
 		var hm uintptr
-		hm, _, e = pCreateMutexW.Call(0, 0, u16p("Local\\NovaRPSpravochnikMutex"))
+		hm, _, e = pCreateMutexW.Call(0, 0, u16p("Local\\NovaHelperMutex"))
 		if !justUpdated || e != syscall.Errno(ERROR_ALREADY_EXISTS) || i > 60 {
 			break
 		}
@@ -359,7 +359,7 @@ func paintMain() {
 		pSelectObject.Call(hdc, app.fBrand)
 		pSetTextColor.Call(hdc, clrText)
 		tr := RECT{lx + ls + s(10), ly - s(1), sw, ly + s(17)}
-		drawText(hdc, "Справочник Nova RP", &tr, DT_SINGLELINE|DT_END_ELLIPSIS|DT_NOPREFIX)
+		drawText(hdc, "Nova Helper", &tr, DT_SINGLELINE|DT_END_ELLIPSIS|DT_NOPREFIX)
 		pSelectObject.Call(hdc, app.fBrandSmall)
 		pSetTextColor.Call(hdc, clrMuted)
 		tr2 := RECT{lx + ls + s(10), ly + s(17), sw, ly + s(33)}
@@ -1029,7 +1029,7 @@ func hideWindowHint(hint bool) {
 	}
 	if hint && !app.closeHinted {
 		app.closeHinted = true
-		balloon("Справочник спрятан в трей", "Нажмите "+app.hkLabel+", чтобы открыть его снова. Закрыть программу — правый клик по значку в трее → Выход.")
+		balloon("Nova Helper спрятан в трей", "Нажмите "+app.hkLabel+", чтобы открыть его снова. Закрыть программу — правый клик по значку в трее → Выход.")
 	}
 }
 
@@ -1063,7 +1063,7 @@ func addTray(withBalloon bool) {
 	copyUTF16(nid.SzTip[:], appTitle+" — "+app.hkLabel)
 	pShellNotifyIconW.Call(NIM_ADD, uintptr(unsafe.Pointer(&nid)))
 	if withBalloon {
-		balloon(appTitle, "Программа запущена. "+app.hkLabel+" — открыть или спрятать справочник.")
+		balloon(appTitle, "Программа запущена. "+app.hkLabel+" — открыть или спрятать Nova Helper.")
 	}
 }
 
@@ -1204,7 +1204,7 @@ func onUpdateResult() {
 		if r.Manual || (isVisible() && !app.askedApp) {
 			askApp()
 		} else if newer {
-			balloon("Есть новая версия программы", "Откройте справочник, чтобы обновить его до версии "+r.NewApp.Version+".")
+			balloon("Есть новая версия программы", "Откройте Nova Helper, чтобы обновить его до версии "+r.NewApp.Version+".")
 		}
 	}
 	if r.Manual && r.NewApp == nil {
@@ -1283,7 +1283,7 @@ func reloadRules() {
 func registerHotkey() {
 	r, _, _ := pRegisterHotKey.Call(app.hwnd, hotkeyID, app.hkMods|MOD_NOREPEAT, app.hkVK)
 	if r == 0 {
-		messageBox(app.hwnd, "Клавиша "+app.hkLabel+" уже занята другой программой.\n\nПоменяйте её в файле settings.ini (строка «Клавиша=») и перезапустите справочник.\nПока справочник можно открывать двойным кликом по значку в трее.", appTitle, MB_ICONWARNING|MB_TOPMOST)
+		messageBox(app.hwnd, "Клавиша "+app.hkLabel+" уже занята другой программой.\n\nПоменяйте её в файле settings.ini (строка «Клавиша=») и перезапустите Nova Helper.\nПока Nova Helper можно открывать двойным кликом по значку в трее.", appTitle, MB_ICONWARNING|MB_TOPMOST)
 	}
 }
 

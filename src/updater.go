@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	appVersion  = "1.1.0"
+	appVersion  = "1.2.0"
 	updateBase  = "https://raw.githubusercontent.com/dashagri/novarp-rules/main/"
 	managedList = "rules-managed.txt" // какие файлы в rules пришли из обновлений
 )

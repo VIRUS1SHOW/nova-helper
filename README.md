@@ -1,4 +1,4 @@
-# Справочник Nova RP (сервер Mirage)
+# Nova Helper — правила Nova RP поверх игры
 
 Программа для Windows: правила проекта Nova RP в отдельном окне, которое открывается поверх игры по **Alt+Q**. Поиск по всем документам, избранное, копирование пунктов для жалоб.
 
@@ -10,7 +10,7 @@
 |---|---|
 | `rules/` | Правила, по одному документу в файле `.txt` |
 | `manifest.json` | Список актуальных файлов и их контрольные суммы — по нему программа понимает, что обновилось |
-| `app/NovaRP-Spravochnik.exe` | Последняя версия программы |
+| `app/NovaHelper.exe` | Последняя версия программы |
 | `src/` | Исходный код (Go, без сторонних библиотек) |
 | `tools/make_manifest.py` | Пересобирает `manifest.json` после изменений |
 | `Instrukciya.txt` | Инструкция для пользователя |
@@ -24,7 +24,7 @@
 ## Как выпустить новую версию программы
 
 1. Поднять `appVersion` в `src/updater.go`.
-2. Собрать: `cd src && GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-H windowsgui -s -w" -o ../app/NovaRP-Spravochnik.exe .`
+2. Собрать: `cd src && GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-H windowsgui -s -w" -o ../app/NovaHelper.exe .`
 3. `python3 tools/make_manifest.py --app-version X.Y.Z --notes "что нового"`
 4. Закоммитить и отправить.
 

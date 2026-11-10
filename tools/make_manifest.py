@@ -49,7 +49,7 @@ def main():
             rules.append({"name": name, "title": title_of(p), "sha256": sha(p)})
 
     app_old = old.get("app", {})
-    exe = "NovaRP-Spravochnik.exe"
+    exe = "NovaHelper.exe"
     app = {
         "version": a.app_version or app_old.get("version", "1.0.0"),
         "file": exe,
