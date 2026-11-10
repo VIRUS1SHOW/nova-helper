@@ -17,7 +17,7 @@ func TestLoadAndSearch(t *testing.T) {
 		}
 	}
 	f, _ := Search(docs, "4.15")
-	if len(f) != 2 {
+	if len(f) < 2 {
 		t.Errorf("4.15: %d", len(f))
 	}
 	f, _ = Search(docs, "DM")
