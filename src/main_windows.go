@@ -33,6 +33,7 @@ const (
 	wmUpdate   = WM_APP + 5
 	wmAppReady = WM_APP + 6
 	wmAskApp   = WM_APP + 7
+	wmAI       = WM_APP + 8
 
 	wmTray         = WM_APP + 1
 	wmShowExisting = WM_APP + 2
@@ -41,24 +42,10 @@ const (
 	modeDoc    = 0
 	modeSearch = 1
 	modeFavs   = 2
+	modeAI     = 3
 
 	maxResults = 150
 )
-
-const (
-	liHeader = iota
-	liDoc
-	liFavs
-	liSep
-	liSec
-)
-
-type listItem struct {
-	kind  int
-	text  string
-	count int
-	idx   int
-}
 
 var (
 	clrBg      = RGB(13, 15, 20)
@@ -71,6 +58,7 @@ var (
 	clrAccent  = RGB(150, 136, 255)
 	clrActive  = RGB(37, 34, 66)
 	clrStatusT = RGB(110, 118, 134)
+	clrHover   = RGB(30, 33, 52)
 )
 
 var app struct {
@@ -79,6 +67,7 @@ var app struct {
 	iconBig, iconSmall     uintptr
 
 	fUI, fSmall, fHeader, fSearch, fBrand, fBrandSmall, fStatus, fLogo uintptr
+	fDoc, fIcon, fPill                                                 uintptr
 	brBg, brPanel, brPanel2, brActive, brAccent                        uintptr
 	penLine, penAccent                                                 uintptr
 
@@ -108,6 +97,39 @@ var app struct {
 	askedApp   bool
 	restart    bool
 	exePath    string
+
+	// оформление
+	accent  int
+	opacity int
+	anim    bool
+
+	// меню слева и анимации
+	open      map[string]bool
+	openSet   bool
+	appear    map[string]float64
+	hover     map[string]float64
+	openAmt   map[string]float64
+	hoverKey  string
+	animOn    bool
+	hoverTop  int // 1 — кнопка ИИ, 2 — настройки
+	aiHover   float64
+	gearHover float64
+	gearSpin  float64
+	focusAmt  float64
+	fade      int
+	fadeT     float64
+	rcAI      RECT
+	rcGear    RECT
+
+	// ИИ
+	ai         AIConfig
+	aiMode     bool
+	aiBusy     bool
+	aiReq      int
+	dots       float64
+	statusDots float64
+	aiView     aiState
+	dlg        uintptr
 }
 
 func s(px float64) int32 { return int32(px*app.scale + 0.5) }
@@ -139,10 +161,22 @@ func main() {
 		return
 	}
 
+	app.appear = map[string]float64{}
+	app.hover = map[string]float64{}
+	app.openAmt = map[string]float64{}
 	loadSettings()
 	loadState()
 	loadFavs()
 	app.docs, app.errs = LoadDocs(filepath.Join(app.dir, "rules"))
+	if !app.openSet {
+		app.open["Основные"] = true
+	}
+	if app.cur < len(app.docs) {
+		app.open[app.docs[app.cur].Group] = true
+	}
+	for g, on := range app.open {
+		app.openAmt[g] = b2f(on)
+	}
 
 	icc := INITCOMMONCONTROLSEX{DwSize: 8, DwICC: 0x4000 | 0x00FF}
 	pInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
@@ -180,7 +214,7 @@ func main() {
 	cx, _, _ := pGetSystemMetrics.Call(0)
 	cy, _, _ := pGetSystemMetrics.Call(1)
 	x, y := (int32(cx)-w)/2, (int32(cy)-h)/2
-	app.hwnd, _, _ = pCreateWindowExW.Call(0, u16p(className), u16p(appTitle),
+	app.hwnd, _, _ = pCreateWindowExW.Call(WS_EX_LAYERED, u16p(className), u16p(appTitle),
 		WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN, uintptr(x), uintptr(y), uintptr(w), uintptr(h), 0, 0, app.hinst, 0)
 
 	// тёмный заголовок окна (Windows 10 20H1+ и 11)
@@ -189,7 +223,9 @@ func main() {
 		pDwmSetWindowAttribute.Call(app.hwnd, 19, uintptr(unsafe.Pointer(&dark)), 4)
 	}
 
+	setAlpha(app.hwnd, targetAlpha())
 	createChildren()
+	hookList()
 	restorePlacement()
 	addTray(startHidden)
 	registerHotkey()
@@ -222,6 +258,21 @@ func main() {
 		if int32(r) <= 0 {
 			break
 		}
+		if app.dlg != 0 {
+			root, _, _ := pGetAncestor.Call(msg.Hwnd, GA_ROOT)
+			if root == app.dlg {
+				if msg.Message == WM_KEYDOWN && msg.WParam == VK_ESCAPE {
+					closeSettings(false)
+					continue
+				}
+				if r, _, _ := pIsDialogMessageW.Call(app.dlg, uintptr(unsafe.Pointer(&msg))); r != 0 {
+					continue
+				}
+				pTranslateMessage.Call(uintptr(unsafe.Pointer(&msg)))
+				pDispatchMessageW.Call(uintptr(unsafe.Pointer(&msg)))
+				continue
+			}
+		}
 		if msg.Message == WM_KEYDOWN && handleKey(msg.WParam) {
 			continue
 		}
@@ -244,20 +295,21 @@ func makeGDI() {
 	app.fBrandSmall = createFont(int(s(11.5)), FW_NORMAL, "Segoe UI")
 	app.fStatus = createFont(int(s(12)), FW_NORMAL, "Segoe UI")
 	app.fLogo = createFont(int(s(15)), 800, "Segoe UI")
+	app.fDoc = createFont(int(s(13.5)), FW_NORMAL, "Segoe UI")
+	app.fIcon = createFont(int(s(15)), FW_NORMAL, "Segoe UI Symbol")
+	app.fPill = createFont(int(s(13)), FW_SEMIBOLD, "Segoe UI")
 	app.brBg, _, _ = pCreateSolidBrush.Call(clrBg)
 	app.brPanel, _, _ = pCreateSolidBrush.Call(clrPanel)
 	app.brPanel2, _, _ = pCreateSolidBrush.Call(clrPanel2)
-	app.brActive, _, _ = pCreateSolidBrush.Call(clrActive)
-	app.brAccent, _, _ = pCreateSolidBrush.Call(clrAccent)
 	app.penLine, _, _ = pCreatePen.Call(0, uintptr(s(1)), clrLine)
-	app.penAccent, _, _ = pCreatePen.Call(0, uintptr(s(1)), clrAccent)
+	applyAccent(app.accent)
 }
 
 func createChildren() {
 	app.edit, _, _ = pCreateWindowExW.Call(0, u16p("EDIT"), 0,
 		WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL, 0, 0, 10, 10, app.hwnd, idEdit, app.hinst, 0)
 	SendMessage(app.edit, WM_SETFONT, app.fSearch, 1)
-	SendMessage(app.edit, EM_SETCUEBANNER, 1, u16p("Поиск по всем правилам: DM, маска, 4.15…"))
+	SendMessage(app.edit, EM_SETCUEBANNER, 1, u16p(searchCue))
 
 	app.list, _, _ = pCreateWindowExW.Call(0, u16p("LISTBOX"), 0,
 		WS_CHILD|WS_VISIBLE|WS_VSCROLL|LBS_NOTIFY|LBS_OWNERDRAWVARIABLE|LBS_NOINTEGRALHEIGHT,
@@ -300,8 +352,15 @@ func layout() {
 	sw := sideWidth(w)
 	th, sh := s(topH), s(statusH)
 	boxX, boxY, boxH := sw+s(16), s(12), s(34)
+	gw, aw := s(34), s(132)
+	if w-sw < s(520) {
+		aw = s(40) // узкое окно — только значок
+	}
+	app.rcGear = RECT{w - s(16) - gw, boxY, w - s(16), boxY + boxH}
+	app.rcAI = RECT{app.rcGear.Left - s(8) - aw, boxY, app.rcGear.Left - s(8), boxY + boxH}
+	boxR := app.rcAI.Left - s(10)
 	editH := s(22)
-	pMoveWindow.Call(app.edit, uintptr(boxX+s(34)), uintptr(boxY+(boxH-editH)/2), uintptr(maxI(w-boxX-s(16)-s(44), s(50))), uintptr(editH), 1)
+	pMoveWindow.Call(app.edit, uintptr(boxX+s(34)), uintptr(boxY+(boxH-editH)/2), uintptr(maxI(boxR-boxX-s(44), s(50))), uintptr(editH), 1)
 	pMoveWindow.Call(app.list, 0, uintptr(th), uintptr(sw), uintptr(maxI(h-th-sh, 10)), 1)
 	pMoveWindow.Call(app.rich, uintptr(sw+1), uintptr(th), uintptr(maxI(w-sw-1, 10)), uintptr(maxI(h-th-sh, 10)), 1)
 	var rr RECT
@@ -363,33 +422,46 @@ func paintMain() {
 		pSelectObject.Call(hdc, app.fBrandSmall)
 		pSetTextColor.Call(hdc, clrMuted)
 		tr2 := RECT{lx + ls + s(10), ly + s(17), sw, ly + s(33)}
-		drawText(hdc, "сервер Mirage", &tr2, DT_SINGLELINE|DT_NOPREFIX)
+		drawText(hdc, "правила NOVA RP", &tr2, DT_SINGLELINE|DT_NOPREFIX)
 	}
 
 	// поле поиска
 	boxX, boxY, boxH := sw+s(16), s(12), s(34)
-	focused := mustFocus() == app.edit
-	pSelectObject.Call(hdc, app.brPanel2)
-	if focused {
-		pSelectObject.Call(hdc, app.penAccent)
-	} else {
-		pSelectObject.Call(hdc, app.penLine)
+	boxR := app.rcAI.Left - s(10)
+	border := mix(clrLine, clrAccent, easeOut(app.focusAmt))
+	if app.focusAmt > 0 {
+		// мягкое свечение вокруг поля при фокусе
+		glow := mix(clrPanel, clrAccent, 0.18*easeOut(app.focusAmt))
+		roundFill(hdc, boxX-s(2), boxY-s(2), boxR+s(2), boxY+boxH+s(2), s(13), glow)
 	}
-	pRoundRect.Call(hdc, uintptr(boxX), uintptr(boxY), uintptr(w-s(16)), uintptr(boxY+boxH), uintptr(s(10)), uintptr(s(10)))
-	// значок лупы
-	pen := mustPenW(clrMuted, s(2))
-	pSelectObject.Call(hdc, pen)
-	nullBrush, _, _ := pGetStockObject.Call(5)
-	pSelectObject.Call(hdc, nullBrush)
-	cx, cy, rr := boxX+s(18), boxY+boxH/2-s(2), s(6)
-	pEllipse.Call(hdc, uintptr(cx-rr), uintptr(cy-rr), uintptr(cx+rr), uintptr(cy+rr))
-	pMoveToEx.Call(hdc, uintptr(cx+rr-s(1)), uintptr(cy+rr-s(1)), 0)
-	pLineTo.Call(hdc, uintptr(cx+rr+s(5)), uintptr(cy+rr+s(5)))
+	pSelectObject.Call(hdc, app.brPanel2)
+	pSelectObject.Call(hdc, mustPenW(border, s(1)))
+	pRoundRect.Call(hdc, uintptr(boxX), uintptr(boxY), uintptr(boxR), uintptr(boxY+boxH), uintptr(s(10)), uintptr(s(10)))
+	paintTopButtons(hdc)
+	// значок лупы (в режиме ИИ — звёздочка)
+	if app.aiMode {
+		pSelectObject.Call(hdc, app.fIcon)
+		pSetTextColor.Call(hdc, clrAccent)
+		ir := RECT{boxX + s(6), boxY, boxX + s(32), boxY + boxH}
+		drawText(hdc, "✦", &ir, DT_SINGLELINE|DT_VCENTER|0x0001)
+	} else {
+		pen := mustPenW(mix(clrMuted, clrAccent, app.focusAmt), s(2))
+		pSelectObject.Call(hdc, pen)
+		nullBrush, _, _ := pGetStockObject.Call(5)
+		pSelectObject.Call(hdc, nullBrush)
+		cx, cy, rr := boxX+s(18), boxY+boxH/2-s(2), s(6)
+		pEllipse.Call(hdc, uintptr(cx-rr), uintptr(cy-rr), uintptr(cx+rr), uintptr(cy+rr))
+		pMoveToEx.Call(hdc, uintptr(cx+rr-s(1)), uintptr(cy+rr-s(1)), 0)
+		pLineTo.Call(hdc, uintptr(cx+rr+s(5)), uintptr(cy+rr+s(5)))
+	}
 
 	// строка состояния
 	pSelectObject.Call(hdc, app.fStatus)
+	pSetTextColor.Call(hdc, clrFaint)
+	vr := RECT{s(14), h - sh, w - s(14), h}
+	drawText(hdc, "v"+appVersion, &vr, DT_VCENTER|DT_SINGLELINE|DT_RIGHT|DT_NOPREFIX)
 	pSetTextColor.Call(hdc, clrStatusT)
-	sr := RECT{s(14), h - sh, w - s(14), h}
+	sr := RECT{s(14), h - sh, w - s(70), h}
 	drawText(hdc, app.status, &sr, DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS|DT_NOPREFIX)
 }
 
@@ -421,138 +493,6 @@ func invalidateSearchBox() {
 	pInvalidateRect.Call(app.hwnd, uintptr(unsafe.Pointer(&r)), 1)
 }
 
-// ------------------------------------------------------------------ список слева
-
-func rebuildList() {
-	app.items = app.items[:0]
-	app.items = append(app.items, listItem{kind: liHeader, text: "ДОКУМЕНТЫ"})
-	for i, d := range app.docs {
-		app.items = append(app.items, listItem{kind: liDoc, text: d.Short, count: len(d.Points), idx: i})
-	}
-	app.items = append(app.items, listItem{kind: liFavs, text: "★  Избранное", count: countFavs()})
-	if app.mode == modeDoc && app.cur < len(app.docs) {
-		app.items = append(app.items, listItem{kind: liSep})
-		app.items = append(app.items, listItem{kind: liHeader, text: "РАЗДЕЛЫ"})
-		for i, sct := range app.docs[app.cur].Sections {
-			if sct.Title != "" {
-				app.items = append(app.items, listItem{kind: liSec, text: sct.Title, idx: i})
-			}
-		}
-	}
-	SendMessage(app.list, WM_SETREDRAW, 0, 0)
-	SendMessage(app.list, LB_RESETCONTENT, 0, 0)
-	for i := range app.items {
-		SendMessage(app.list, LB_ADDSTRING, 0, uintptr(i))
-	}
-	SendMessage(app.list, WM_SETREDRAW, 1, 0)
-	pInvalidateRect.Call(app.list, 0, 1)
-}
-
-func countFavs() int {
-	n := 0
-	for _, d := range app.docs {
-		for _, p := range d.Points {
-			if app.favs[FavKey(p)] {
-				n++
-			}
-		}
-	}
-	return n
-}
-
-func measureItem(mis *MEASUREITEMSTRUCT) {
-	i := int(mis.ItemData)
-	if i < 0 || i >= len(app.items) {
-		mis.ItemHeight = uint32(s(30))
-		return
-	}
-	it := app.items[i]
-	switch it.kind {
-	case liHeader:
-		mis.ItemHeight = uint32(s(30))
-	case liSep:
-		mis.ItemHeight = uint32(s(8))
-	case liSec:
-		var rc RECT
-		pGetClientRect.Call(app.list, uintptr(unsafe.Pointer(&rc)))
-		width := rc.Right
-		if width < s(100) {
-			width = sideWidth(s(1000))
-		}
-		hdc, _, _ := pGetDC.Call(app.list)
-		pSelectObject.Call(hdc, app.fSmall)
-		r := RECT{0, 0, width - s(40), 0}
-		drawText(hdc, it.text, &r, DT_CALCRECT|DT_WORDBREAK|DT_NOPREFIX)
-		pReleaseDC.Call(app.list, hdc)
-		mis.ItemHeight = uint32(r.Bottom + s(12))
-	default:
-		mis.ItemHeight = uint32(s(36))
-	}
-}
-
-func drawItem(dis *DRAWITEMSTRUCT) {
-	if dis.ItemID == 0xFFFFFFFF {
-		return
-	}
-	i := int(dis.ItemData)
-	if i < 0 || i >= len(app.items) {
-		return
-	}
-	it := app.items[i]
-	hdc := dis.HDC
-	rc := dis.RcItem
-	fillRect(hdc, &rc, app.brPanel)
-	pSetBkMode.Call(hdc, TRANSPARENT)
-
-	active := false
-	switch it.kind {
-	case liDoc:
-		active = app.mode == modeDoc && app.cur == it.idx
-	case liFavs:
-		active = app.mode == modeFavs
-	case liSec:
-		active = app.mode == modeDoc && app.curSec == it.idx
-	}
-
-	switch it.kind {
-	case liHeader:
-		pSelectObject.Call(hdc, app.fHeader)
-		pSetTextColor.Call(hdc, clrFaint)
-		r := RECT{rc.Left + s(18), rc.Top + s(8), rc.Right - s(10), rc.Bottom}
-		drawText(hdc, it.text, &r, DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX)
-	case liSep:
-	case liDoc, liFavs:
-		if active {
-			pSelectObject.Call(hdc, app.brActive)
-			pSelectObject.Call(hdc, mustPen(clrActive))
-			pRoundRect.Call(hdc, uintptr(rc.Left+s(8)), uintptr(rc.Top+s(2)), uintptr(rc.Right-s(8)), uintptr(rc.Bottom-s(2)), uintptr(s(8)), uintptr(s(8)))
-		}
-		pSelectObject.Call(hdc, app.fUI)
-		if active {
-			pSetTextColor.Call(hdc, clrText)
-		} else {
-			pSetTextColor.Call(hdc, clrMuted)
-		}
-		r := RECT{rc.Left + s(18), rc.Top, rc.Right - s(46), rc.Bottom}
-		drawText(hdc, it.text, &r, DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS|DT_NOPREFIX)
-		pSelectObject.Call(hdc, app.fSmall)
-		pSetTextColor.Call(hdc, clrFaint)
-		r2 := RECT{rc.Right - s(60), rc.Top, rc.Right - s(18), rc.Bottom}
-		drawText(hdc, strconv.Itoa(it.count), &r2, DT_SINGLELINE|DT_VCENTER|DT_RIGHT)
-	case liSec:
-		if active {
-			bar := RECT{rc.Left + s(14), rc.Top + s(4), rc.Left + s(16), rc.Bottom - s(4)}
-			fillRect(hdc, &bar, app.brAccent)
-			pSetTextColor.Call(hdc, clrText)
-		} else {
-			pSetTextColor.Call(hdc, clrMuted)
-		}
-		pSelectObject.Call(hdc, app.fSmall)
-		r := RECT{rc.Left + s(24), rc.Top + s(6), rc.Right - s(16), rc.Bottom}
-		drawText(hdc, it.text, &r, DT_WORDBREAK|DT_NOPREFIX)
-	}
-}
-
 var penCache = map[uintptr]uintptr{}
 var penWCache = map[[2]uintptr]uintptr{}
 
@@ -573,33 +513,6 @@ func mustPen(c uintptr) uintptr {
 	p, _, _ := pCreatePen.Call(0, 1, c)
 	penCache[c] = p
 	return p
-}
-
-func onListClick() {
-	sel := int32(SendMessage(app.list, LB_GETCURSEL, 0, 0))
-	if sel < 0 {
-		return
-	}
-	i := int(SendMessage(app.list, LB_GETITEMDATA, uintptr(sel), 0))
-	SendMessage(app.list, LB_SETCURSEL, ^uintptr(0), 0)
-	if i < 0 || i >= len(app.items) {
-		return
-	}
-	it := app.items[i]
-	switch it.kind {
-	case liDoc:
-		clearSearchSilently()
-		showDoc(it.idx)
-	case liFavs:
-		clearSearchSilently()
-		showFavs()
-	case liSec:
-		if it.idx < len(app.rend.Sections) {
-			scrollToPos(app.rend.Sections[it.idx])
-			app.curSec = it.idx
-			pInvalidateRect.Call(app.list, 0, 0)
-		}
-	}
 }
 
 // ------------------------------------------------------------------ содержимое
@@ -662,7 +575,7 @@ func docStatus() string {
 	if d.Updated != "" {
 		upd = "Обновлено " + d.Updated + "   ·   "
 	}
-	return upd + "Правый клик по пункту — копировать или в избранное   ·   Ctrl + колесо — размер текста   ·   Esc — спрятать"
+	return upd + "Правый клик по пункту — копировать или в избранное   ·   Ctrl+I — спросить ИИ   ·   Ctrl+, — настройки   ·   Esc — спрятать"
 }
 
 func showDoc(i int) {
@@ -673,6 +586,7 @@ func showDoc(i int) {
 	app.mode = modeDoc
 	app.cur = i
 	app.curSec = 0
+	ensureOpen(i)
 	setRTF(RenderDoc(app.docs[i], app.favs, app.errs))
 	rebuildList()
 	setStatus(docStatus())
@@ -801,6 +715,9 @@ func toggleFav(p *Point) {
 		showFavs()
 	case modeSearch:
 		doSearch()
+	case modeAI:
+		renderAIView()
+		rebuildList()
 	}
 	SendMessage(app.rich, EM_LINESCROLL, 0, uintptr(first))
 }
@@ -936,14 +853,32 @@ func handleKey(vk uintptr) bool {
 	focus := mustFocus()
 	switch {
 	case vk == VK_ESCAPE:
-		if getWindowText(app.edit) != "" {
+		switch {
+		case getWindowText(app.edit) != "":
 			pSetWindowTextW.Call(app.edit, u16p(""))
 			pKillTimer.Call(app.hwnd, tmrSearch)
-			doSearch()
+			if !app.aiMode {
+				doSearch()
+			}
 			pSetFocus.Call(app.edit)
-		} else {
+		case app.aiMode:
+			exitAIMode()
+		default:
 			hideWindow()
 		}
+		return true
+	case ctrl && vk == VK_RETURN:
+		startAsk(getWindowText(app.edit))
+		return true
+	case ctrl && vk == 'I':
+		if app.aiMode {
+			exitAIMode()
+		} else {
+			enterAIMode()
+		}
+		return true
+	case ctrl && vk == 0xBC: // Ctrl+, — настройки
+		openSettings("")
 		return true
 	case ctrl && (vk == 'F' || vk == 'L'):
 		pSetFocus.Call(app.edit)
@@ -969,7 +904,11 @@ func handleKey(vk uintptr) bool {
 			return true
 		case vk == VK_RETURN:
 			pKillTimer.Call(app.hwnd, tmrSearch)
-			doSearch()
+			if app.aiMode {
+				startAsk(getWindowText(app.edit))
+			} else {
+				doSearch()
+			}
 			return true
 		case vk == VK_DOWN:
 			SendMessage(app.rich, WM_VSCROLL, SB_LINEDOWN, 0)
@@ -999,10 +938,18 @@ func showWindow() {
 	if fg != app.hwnd {
 		app.prevFg = fg
 	}
+	appearing := !isVisible() || app.fade == fadeOut
+	if appearing && app.anim && app.fade != fadeOut {
+		app.fadeT = 0
+		setAlpha(app.hwnd, 0)
+	}
 	if ic, _, _ := pIsIconic.Call(app.hwnd); ic != 0 {
 		pShowWindow.Call(app.hwnd, SW_RESTORE)
 	} else {
 		pShowWindow.Call(app.hwnd, SW_SHOW)
+	}
+	if appearing {
+		startFade(fadeIn)
 	}
 	after := HWND_NOTOPMOST
 	if app.onTop {
@@ -1021,7 +968,7 @@ func hideWindow() { hideWindowHint(false) }
 
 func hideWindowHint(hint bool) {
 	saveState()
-	pShowWindow.Call(app.hwnd, SW_HIDE)
+	startFade(fadeOut)
 	if app.prevFg != 0 {
 		if ok, _, _ := pIsWindow.Call(app.prevFg); ok != 0 {
 			pSetForegroundWindow.Call(app.prevFg)
@@ -1034,7 +981,7 @@ func hideWindowHint(hint bool) {
 }
 
 func toggle() {
-	if isVisible() {
+	if isVisible() && app.fade != fadeOut {
 		if ic, _, _ := pIsIconic.Call(app.hwnd); ic != 0 {
 			showWindow()
 			return
@@ -1087,7 +1034,8 @@ func trayMenu() {
 	pAppendMenuW.Call(m, MF_STRING, 1, u16p("Открыть / спрятать\t"+app.hkLabel))
 	pAppendMenuW.Call(m, MF_STRING, 2, u16p("Перечитать правила\tF5"))
 	pAppendMenuW.Call(m, MF_STRING, 3, u16p("Открыть папку с правилами"))
-	pAppendMenuW.Call(m, MF_STRING, 4, u16p("Настройки (settings.ini)"))
+	pAppendMenuW.Call(m, MF_STRING, 10, u16p("Настройки…\tCtrl+,"))
+	pAppendMenuW.Call(m, MF_STRING, 4, u16p("Открыть файл settings.ini"))
 	flags := uintptr(MF_STRING)
 	if autostartEnabled(autostartName) {
 		flags |= MF_CHECKED
@@ -1143,6 +1091,9 @@ func trayMenu() {
 	case 9:
 		saveState()
 		pDestroyWindow.Call(app.hwnd)
+	case 10:
+		showWindow()
+		openSettings("")
 	}
 }
 
@@ -1272,6 +1223,8 @@ func reloadRules() {
 		doSearch()
 	case app.mode == modeFavs:
 		showFavs()
+	case app.mode == modeAI:
+		rebuildList()
 	default:
 		showDoc(app.cur)
 	}
@@ -1331,8 +1284,11 @@ func wndProc(hwnd uintptr, msg uintptr, wParam, lParam uintptr) uintptr {
 		id, code := wParam&0xFFFF, (wParam>>16)&0xFFFF
 		switch {
 		case id == idEdit && code == EN_CHANGE:
-			pSetTimer.Call(hwnd, tmrSearch, 160, 0)
+			if !app.aiMode {
+				pSetTimer.Call(hwnd, tmrSearch, 160, 0)
+			}
 		case id == idEdit && (code == 0x0100 || code == 0x0200): // EN_SETFOCUS / EN_KILLFOCUS
+			kickAnim()
 			invalidateSearchBox()
 		case id == idList && code == LBN_SELCHANGE:
 			onListClick()
@@ -1358,8 +1314,30 @@ func wndProc(hwnd uintptr, msg uintptr, wParam, lParam uintptr) uintptr {
 		case tmrFlash:
 			pKillTimer.Call(hwnd, tmrFlash)
 			SendMessage(app.rich, EM_SETSEL, uintptr(app.flashStart), uintptr(app.flashStart))
+		case tmrAnim:
+			animTick()
 		}
 		return 0
+	case wmAI:
+		onAIResult(int(wParam))
+		return 0
+	case WM_MOUSEMOVE:
+		onTopMouse(lParam)
+		return 0
+	case WM_MOUSELEAVE:
+		if app.hoverTop != 0 {
+			app.hoverTop = 0
+			kickAnim()
+		}
+		return 0
+	case WM_LBUTTONDOWN:
+		onTopClick(lParam)
+		return 0
+	case WM_SETCURSOR:
+		if wParam == hwnd && app.hoverTop != 0 && lParam&0xFFFF == 1 { // HTCLIENT
+			handCursor()
+			return 1
+		}
 	case WM_APP + 3:
 		if pendingOpen != nil {
 			p := pendingOpen

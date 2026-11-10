@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	appVersion  = "1.2.0"
+	appVersion  = "1.3.0"
 	updateBase  = "https://raw.githubusercontent.com/VIRUS1SHOW/nova-helper/main/"
 	managedList = "rules-managed.txt" // какие файлы в rules пришли из обновлений
 )

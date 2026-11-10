@@ -29,7 +29,7 @@ var payload []byte
 const (
 	appName    = "Nova Helper"
 	appExe     = "NovaHelper.exe"
-	appVersion = "1.2.0"
+	appVersion = "1.3.0"
 	publisher  = "VIRUS1SHOW"
 	regUninst  = `Software\Microsoft\Windows\CurrentVersion\Uninstall\NovaHelper`
 	regRun     = `Software\Microsoft\Windows\CurrentVersion\Run`
@@ -68,12 +68,12 @@ var (
 	pLoadCursorW        = user32.NewProc("LoadCursorW")
 	pSetFocus           = user32.NewProc("SetFocus")
 
-	pCreateFontW    = gdi32.NewProc("CreateFontW")
-	pGetDeviceCaps  = gdi32.NewProc("GetDeviceCaps")
-	pSetBkMode      = gdi32.NewProc("SetBkMode")
-	pSetTextColor   = gdi32.NewProc("SetTextColor")
+	pCreateFontW      = gdi32.NewProc("CreateFontW")
+	pGetDeviceCaps    = gdi32.NewProc("GetDeviceCaps")
+	pSetBkMode        = gdi32.NewProc("SetBkMode")
+	pSetTextColor     = gdi32.NewProc("SetTextColor")
 	pGetModuleHandleW = kernel32.NewProc("GetModuleHandleW")
-	pCreateMutexW   = kernel32.NewProc("CreateMutexW")
+	pCreateMutexW     = kernel32.NewProc("CreateMutexW")
 
 	pRegCreateKeyExW = advapi32.NewProc("RegCreateKeyExW")
 	pRegOpenKeyExW   = advapi32.NewProc("RegOpenKeyExW")
@@ -86,13 +86,13 @@ var (
 )
 
 const (
-	WS_OVERLAPPED   = 0x00000000
-	WS_CAPTION      = 0x00C00000
-	WS_SYSMENU      = 0x00080000
-	WS_MINIMIZEBOX  = 0x00020000
-	WS_CHILD        = 0x40000000
-	WS_VISIBLE      = 0x10000000
-	WS_TABSTOP      = 0x00010000
+	WS_OVERLAPPED       = 0x00000000
+	WS_CAPTION          = 0x00C00000
+	WS_SYSMENU          = 0x00080000
+	WS_MINIMIZEBOX      = 0x00020000
+	WS_CHILD            = 0x40000000
+	WS_VISIBLE          = 0x10000000
+	WS_TABSTOP          = 0x00010000
 	WS_EX_DLGMODALFRAME = 0x00000001
 
 	BS_PUSHBUTTON    = 0x0
@@ -111,21 +111,21 @@ const (
 	BM_SETCHECK       = 0x00F1
 	BST_CHECKED       = 1
 
-	MB_OK          = 0x0
-	MB_YESNO       = 0x4
-	MB_ICONINFO    = 0x40
-	MB_ICONWARN    = 0x30
-	MB_ICONERROR   = 0x10
+	MB_OK           = 0x0
+	MB_YESNO        = 0x4
+	MB_ICONINFO     = 0x40
+	MB_ICONWARN     = 0x30
+	MB_ICONERROR    = 0x10
 	MB_ICONQUESTION = 0x20
-	IDYES          = 6
+	IDYES           = 6
 
-	COLOR_WINDOW  = 5
-	SM_CXSCREEN   = 0
-	SM_CYSCREEN   = 1
-	LOGPIXELSY    = 90
-	TRANSPARENT   = 1
-	SW_SHOW       = 5
-	IDC_ARROW     = 32512
+	COLOR_WINDOW = 5
+	SM_CXSCREEN  = 0
+	SM_CYSCREEN  = 1
+	LOGPIXELSY   = 90
+	TRANSPARENT  = 1
+	SW_SHOW      = 5
+	IDC_ARROW    = 32512
 
 	HKEY_CURRENT_USER = 0x80000001
 	KEY_ALL_ACCESS    = 0xF003F
@@ -388,14 +388,14 @@ func doUninstall() {
 // ------------------------------------------------------------------ окно
 
 var ui struct {
-	hinst, hwnd             uintptr
-	btnInstall, btnCancel   uintptr
+	hinst, hwnd              uintptr
+	btnInstall, btnCancel    uintptr
 	chkDesk, chkAuto, chkRun uintptr
-	status                  uintptr
-	font, fontTitle         uintptr
-	scale                   float64
-	done                    bool
-	icon, iconSm            uintptr
+	status                   uintptr
+	font, fontTitle          uintptr
+	scale                    float64
+	done                     bool
+	icon, iconSm             uintptr
 }
 
 func s(px float64) uintptr { return uintptr(int32(px*ui.scale + 0.5)) }

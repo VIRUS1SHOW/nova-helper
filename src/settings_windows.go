@@ -19,7 +19,22 @@ const defaultSettings = "; Настройки Nova Helper\r\n" +
 	"Клавиша=Alt+Q\r\n" +
 	"\r\n" +
 	"; Окно поверх всех окон (да / нет)\r\n" +
-	"ПоверхВсехОкон=да\r\n"
+	"ПоверхВсехОкон=да\r\n" +
+	"\r\n" +
+	"; Оформление (удобнее менять в окне «Настройки» — значок шестерёнки)\r\n" +
+	"; Цвета: Фиолетовый, Синий, Бирюзовый, Зелёный, Оранжевый, Красный, Розовый\r\n" +
+	"Акцент=Фиолетовый\r\n" +
+	"; Непрозрачность окна в процентах: от 40 до 100\r\n" +
+	"Прозрачность=100\r\n" +
+	"Анимации=да\r\n" +
+	"\r\n" +
+	"; ИИ: yandex, claude, deepseek, openrouter, openai, gemini, ollama, lmstudio, custom\r\n" +
+	"; Ключ после сохранения в окне настроек хранится зашифрованным.\r\n" +
+	"ИИ_Сервис=yandex\r\n" +
+	"ИИ_Ключ=\r\n" +
+	"ИИ_Каталог=\r\n" +
+	"ИИ_Модель=\r\n" +
+	"ИИ_Адрес=\r\n"
 
 func readKV(path string) (map[string]string, bool) {
 	b, err := os.ReadFile(path)
@@ -57,32 +72,98 @@ func loadSettings() {
 	}
 	app.hkMods, app.hkVK, app.hkLabel = mods, vk, label
 	v := strings.ToLower(m["поверхвсехокон"])
-	app.onTop = !(v == "нет" || v == "no" || v == "0" || v == "false")
+	app.onTop = !isNo(v)
+
+	app.accent = accentIndex(m["акцент"])
+	app.opacity = 100
+	if o, err := strconv.Atoi(strings.TrimSuffix(m["прозрачность"], "%")); err == nil {
+		app.opacity = clampInt(o, 40, 100)
+	}
+	app.anim = !isNo(strings.ToLower(m["анимации"]))
+
+	app.ai = AIConfig{
+		Provider: m["ии_сервис"],
+		Key:      unprotect(m["ии_ключ"]),
+		Folder:   m["ии_каталог"],
+		Model:    m["ии_модель"],
+		BaseURL:  m["ии_адрес"],
+	}
+	if app.ai.Provider == "" {
+		app.ai.Provider = AIProviders[0].ID
+	}
+	// ключ, вписанный вручную открытым текстом, сразу шифруем
+	if k := m["ии_ключ"]; k != "" && !strings.HasPrefix(k, "dpapi:") {
+		if enc := protect(k); enc != "" {
+			setSetting("ИИ_Ключ", enc)
+		}
+	}
 }
 
-func saveSettingOnTop() {
+func isNo(v string) bool {
+	return v == "нет" || v == "no" || v == "0" || v == "false" || v == "выкл"
+}
+
+func clampInt(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// setSetting меняет одну строку settings.ini, сохраняя комментарии и остальные строки.
+func setSetting(key, val string) {
 	b, err := os.ReadFile(settingsPath())
 	if err != nil {
 		b = []byte(defaultSettings)
 	}
-	val := "нет"
-	if app.onTop {
-		val = "да"
-	}
 	lines := strings.Split(string(b), "\n")
+	lk := strings.ToLower(key)
 	found := false
 	for i, l := range lines {
-		t := strings.ToLower(strings.TrimSpace(l))
-		if strings.HasPrefix(t, "поверхвсехокон") {
-			lines[i] = "ПоверхВсехОкон=" + val + "\r"
+		t := strings.TrimSpace(l)
+		if strings.HasPrefix(t, ";") || strings.HasPrefix(t, "#") {
+			continue
+		}
+		k, _, ok := strings.Cut(t, "=")
+		if ok && strings.ToLower(strings.TrimSpace(k)) == lk {
+			lines[i] = key + "=" + val + "\r"
 			found = true
 		}
 	}
 	out := strings.Join(lines, "\n")
 	if !found {
-		out = strings.TrimRight(out, "\r\n") + "\r\nПоверхВсехОкон=" + val + "\r\n"
+		out = strings.TrimRight(out, "\r\n") + "\r\n" + key + "=" + val + "\r\n"
 	}
 	os.WriteFile(settingsPath(), []byte(out), 0644)
+}
+
+func saveAISettings() {
+	setSetting("ИИ_Сервис", app.ai.Provider)
+	setSetting("ИИ_Ключ", protect(strings.TrimSpace(app.ai.Key)))
+	setSetting("ИИ_Каталог", strings.TrimSpace(app.ai.Folder))
+	setSetting("ИИ_Модель", strings.TrimSpace(app.ai.Model))
+	setSetting("ИИ_Адрес", strings.TrimSpace(app.ai.BaseURL))
+}
+
+func saveLookSettings() {
+	setSetting("Акцент", accents[app.accent].Name)
+	setSetting("Прозрачность", strconv.Itoa(app.opacity))
+	if app.anim {
+		setSetting("Анимации", "да")
+	} else {
+		setSetting("Анимации", "нет")
+	}
+}
+
+func saveSettingOnTop() {
+	if app.onTop {
+		setSetting("ПоверхВсехОкон", "да")
+	} else {
+		setSetting("ПоверхВсехОкон", "нет")
+	}
 }
 
 type winState struct {
@@ -92,7 +173,19 @@ type winState struct {
 
 var state winState
 
+func openGroups() []string {
+	var out []string
+	for g, on := range app.open {
+		if on {
+			out = append(out, g)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
 func loadState() {
+	app.open = map[string]bool{}
 	m, ok := readKV(statePath())
 	if !ok {
 		app.zoom = 100
@@ -109,12 +202,21 @@ func loadState() {
 	if app.cur < 0 {
 		app.cur = 0
 	}
+	if v, ok := m["open"]; ok {
+		app.openSet = true
+		for _, g := range strings.Split(v, "|") {
+			if g = strings.TrimSpace(g); g != "" {
+				app.open[g] = true
+			}
+		}
+	}
 }
 
 func writeState(x, y, w, h int) {
 	s := "; Служебный файл: положение окна и масштаб. Можно удалить — настройки сбросятся.\r\n" +
 		"x=" + strconv.Itoa(x) + "\r\ny=" + strconv.Itoa(y) + "\r\nw=" + strconv.Itoa(w) + "\r\nh=" + strconv.Itoa(h) +
-		"\r\nzoom=" + strconv.Itoa(app.zoom) + "\r\ndoc=" + strconv.Itoa(app.cur) + "\r\n"
+		"\r\nzoom=" + strconv.Itoa(app.zoom) + "\r\ndoc=" + strconv.Itoa(app.cur) +
+		"\r\nopen=" + strings.Join(openGroups(), "|") + "\r\n"
 	os.WriteFile(statePath(), []byte(s), 0644)
 }
 

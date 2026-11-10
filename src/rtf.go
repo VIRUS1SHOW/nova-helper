@@ -372,3 +372,164 @@ func SortByDoc(pts []*Point, docs []*Doc) {
 		return pts[a].Index < pts[b].Index
 	})
 }
+
+// ------------------------------------------------------------------ ИИ
+
+// answerLine выводит строку ответа, выделяя ссылки на пункты.
+func (r *rtfB) answerLine(s string) {
+	locs := citeRe.FindAllStringIndex(s, -1)
+	last := 0
+	for _, l := range locs {
+		if l[0] > last {
+			r.span(fmt.Sprintf("\\cf%d", cText), s[last:l[0]])
+		}
+		r.span(fmt.Sprintf("\\b\\cf%d", cAccent), s[l[0]:l[1]])
+		last = l[1]
+	}
+	if last < len(s) {
+		r.span(fmt.Sprintf("\\cf%d", cText), s[last:])
+	}
+}
+
+func (r *rtfB) smallMuted(s string, sb, sa int) {
+	r.para(0, 0, sb, sa)
+	r.span(fmt.Sprintf("\\fs18\\cf%d", cMuted), s)
+	r.par()
+}
+
+// RenderAI — вопрос, ответ ИИ и пункты, на которые он сослался.
+func RenderAI(q string, answer []string, cited, related []*Point, favs map[string]bool, meta, errText string, thinking bool, errs []string) Rendered {
+	r := &rtfB{}
+	r.raw(header())
+	r.errors(errs)
+	r.para(0, 0, 0, 40)
+	r.span(fmt.Sprintf("\\f1\\fs34\\cf%d", cAccent), "✦ ")
+	r.span(fmt.Sprintf("\\b\\fs34\\cf%d", cWhite), "Вопрос к ИИ")
+	r.par()
+	r.para(0, 0, 60, 120)
+	r.span(fmt.Sprintf("\\i\\fs24\\cf%d", cPara), "«"+q+"»")
+	r.par()
+	out := Rendered{}
+
+	switch {
+	case thinking:
+		r.para(0, 0, 120, 60)
+		r.span(fmt.Sprintf("\\b\\cf%d", cAccent), "Думаю над ответом…")
+		r.par()
+		r.smallMuted("Подбираю подходящие пункты правил и отправляю их ИИ. Обычно это занимает 3–15 секунд.", 0, 0)
+		if meta != "" {
+			r.smallMuted(meta, 40, 0)
+		}
+	case errText != "":
+		r.para(0, 0, 120, 60)
+		r.span(fmt.Sprintf("\\b\\cf%d", cRed), "Не получилось получить ответ")
+		r.par()
+		for _, l := range strings.Split(errText, "\n") {
+			r.para(0, 0, 0, 40)
+			r.span(fmt.Sprintf("\\cf%d", cPara), l)
+			r.par()
+		}
+		r.smallMuted("Проверьте настройки ИИ: значок шестерёнки справа сверху или Ctrl+, (запятая).", 120, 0)
+	default:
+		for _, l := range answer {
+			if l == "" {
+				r.para(0, 0, 0, 0)
+				r.par()
+				continue
+			}
+			if strings.HasPrefix(l, "- ") {
+				r.para(300, -300, 20, 40)
+				r.raw("\\tx300 ")
+				r.span(fmt.Sprintf("\\cf%d", cAccent), "•\t")
+				r.answerLine(strings.TrimPrefix(l, "- "))
+				r.par()
+				continue
+			}
+			r.para(0, 0, 40, 80)
+			r.answerLine(l)
+			r.par()
+		}
+		if meta != "" {
+			r.smallMuted("Ответил: "+meta, 160, 0)
+		}
+		r.para(0, 0, 40, 0)
+		r.span(fmt.Sprintf("\\fs18\\cf%d", cYellow), "ИИ может ошибаться. Сверяйтесь с пунктами ниже — окончательное решение всегда за администрацией.")
+		r.par()
+	}
+
+	pts, label := cited, "Пункты, на которые ссылается ответ"
+	if len(pts) == 0 && len(related) > 0 {
+		pts, label = related, "Похожие пункты правил"
+	}
+	if len(pts) > 0 {
+		r.para(0, 0, 480, 0)
+		r.span(fmt.Sprintf("\\b\\fs26\\cf%d", cWhite), label)
+		r.par()
+		last := ""
+		for _, p := range pts {
+			lb := p.Doc.Short
+			if p.Sec != nil && p.Sec.Title != "" {
+				lb += "  ·  " + p.Sec.Title
+			}
+			if lb != last {
+				r.para(0, 0, 240, 0)
+				r.span(fmt.Sprintf("\\fs18\\cf%d", cMuted), lb)
+				r.par()
+				last = lb
+			}
+			out.Points = append(out.Points, r.point(p, favs[FavKey(p)]))
+		}
+	}
+	r.para(0, 0, 400, 0)
+	r.par()
+	r.raw("}")
+	out.RTF = r.b.String()
+	out.Length = r.pos
+	return out
+}
+
+// RenderAIIntro — подсказка при входе в режим ИИ.
+func RenderAIIntro(provider, problem string, errs []string) Rendered {
+	r := &rtfB{}
+	r.raw(header())
+	r.errors(errs)
+	r.para(0, 0, 0, 40)
+	r.span(fmt.Sprintf("\\f1\\fs34\\cf%d", cAccent), "✦ ")
+	r.span(fmt.Sprintf("\\b\\fs34\\cf%d", cWhite), "Спросить ИИ по правилам")
+	r.par()
+	r.para(0, 0, 60, 60)
+	r.span(fmt.Sprintf("\\cf%d", cPara), "Напишите вопрос своими словами в поле сверху и нажмите Enter. ИИ получит подходящие пункты правил и ответит со ссылками на них — каждый пункт можно открыть двойным кликом.")
+	r.par()
+	if problem != "" {
+		r.para(0, 0, 160, 40)
+		r.span(fmt.Sprintf("\\b\\cf%d", cOrange), "Сначала настройте ИИ")
+		r.par()
+		r.para(0, 0, 0, 40)
+		r.span(fmt.Sprintf("\\cf%d", cPara), problem+" Нажмите на шестерёнку справа сверху (или Ctrl+, ), выберите сервис и вставьте свой ключ.")
+		r.par()
+	} else {
+		r.smallMuted("Сейчас используется: "+provider+"   ·   сменить — шестерёнка справа сверху", 120, 0)
+	}
+	r.para(0, 0, 360, 80)
+	r.span(fmt.Sprintf("\\b\\fs26\\cf%d", cWhite), "Например")
+	r.par()
+	for _, ex := range []string{
+		"Можно ли отстреливаться в зелёной зоне, если по мне открыли огонь?",
+		"Сколько можно требовать за выкуп лидера фракции?",
+		"Что будет за DM и чем он отличается от DB?",
+		"Сколько человек нужно, чтобы ограбить магазин 24/7?",
+		"Можно ли второму персонажу быть в банде, если первый в LSPD?",
+	} {
+		r.para(300, -300, 20, 40)
+		r.raw("\\tx300 ")
+		r.span(fmt.Sprintf("\\cf%d", cAccent), "•\t")
+		r.span(fmt.Sprintf("\\cf%d", cPara), ex)
+		r.par()
+	}
+	r.smallMuted("Ключ хранится только на вашем компьютере в зашифрованном виде. Запросы оплачиваются по тарифам выбранного сервиса (Ollama и LM Studio — бесплатно).", 360, 0)
+	r.para(0, 0, 400, 0)
+	r.par()
+	r.raw("}")
+	out := Rendered{RTF: r.b.String(), Length: r.pos}
+	return out
+}

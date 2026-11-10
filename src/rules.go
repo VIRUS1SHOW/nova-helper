@@ -26,8 +26,9 @@ type Point struct {
 	Items  []Item
 	Doc    *Doc
 	Sec    *Section
-	Index  int    // порядковый номер в документе
-	search string // нормализованный текст для поиска
+	Index  int             // порядковый номер в документе
+	search string          // нормализованный текст для поиска
+	words  map[string]bool // отдельные слова (для коротких запросов вроде «дм»)
 }
 
 // Block — либо пункт, либо служебная строка раздела (абзац, подзаголовок, список).
@@ -45,6 +46,7 @@ type Doc struct {
 	File     string
 	Title    string
 	Short    string
+	Group    string
 	Updated  string
 	Source   string
 	Sections []*Section
@@ -79,6 +81,9 @@ func LoadDocs(dir string) ([]*Doc, []string) {
 		if d.Short == "" {
 			d.Short = d.Title
 		}
+		if d.Group == "" {
+			d.Group = "Другое"
+		}
 		docs = append(docs, d)
 	}
 	return docs, errs
@@ -109,6 +114,8 @@ func ParseDoc(src string) *Doc {
 					d.Title = v
 				case "кратко":
 					d.Short = v
+				case "группа":
+					d.Group = v
 				case "обновлено":
 					d.Updated = v
 				case "ссылка":
@@ -168,6 +175,7 @@ func ParseDoc(src string) *Doc {
 			parts = append(parts, it.Label+" "+it.Text)
 		}
 		p.search = Norm(strings.Join(parts, "\n"))
+		p.words = wordSet(p.search)
 	}
 	return d
 }
@@ -248,11 +256,22 @@ func Search(docs []*Doc, q string) (found []*Point, words []string) {
 		}
 		return found, []string{n}
 	}
+	alts := make([][]string, len(words))
+	for i, w := range words {
+		alts[i] = Expand(w)
+	}
 	for _, d := range docs {
 		for _, p := range d.Points {
 			ok := true
-			for _, w := range words {
-				if !strings.Contains(p.search, w) {
+			for _, a := range alts {
+				hit := false
+				for _, w := range a {
+					if termIn(p.search, p.words, w) {
+						hit = true
+						break
+					}
+				}
+				if !hit {
 					ok = false
 					break
 				}
@@ -262,7 +281,11 @@ func Search(docs []*Doc, q string) (found []*Point, words []string) {
 			}
 		}
 	}
-	return found, words
+	var hl []string
+	for _, a := range alts {
+		hl = append(hl, a...)
+	}
+	return found, hl
 }
 
 // FavKey — ключ избранного, устойчивый к перестановке пунктов.
@@ -293,4 +316,109 @@ func PointText(p *Point) string {
 		}
 	}
 	return b.String()
+}
+
+// Groups возвращает названия групп в порядке первого появления.
+func Groups(docs []*Doc) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, d := range docs {
+		if !seen[d.Group] {
+			seen[d.Group] = true
+			out = append(out, d.Group)
+		}
+	}
+	return out
+}
+
+// synonyms — русское написание терминов и сокращений: «дм» найдёт DM и DeathMatch.
+var synonyms = map[string][]string{
+	"дм":       {"dm", "deathmatch"},
+	"дб":       {"db", "driveby", "drive by"},
+	"пг":       {"pg", "powergaming"},
+	"мг":       {"mg", "metagaming"},
+	"рк":       {"rk", "revenge kill", "repeat kill"},
+	"ск":       {"sk", "spawn kill", "spawnkill"},
+	"тк":       {"tk", "team kill"},
+	"нлр":      {"nlr", "new life rule"},
+	"нрп":      {"nonrp", "non-rp", "nrp", "nrd", "nrf"},
+	"нрд":      {"nrd", "nonrp drive"},
+	"зз":       {"зелен", "green zone"},
+	"гз":       {"зелен", "green zone"},
+	"оос":      {"ooc", "оос"},
+	"ик":       {"ic"},
+	"фз":       {"форт", "zancudo", "занкудо"},
+	"нг":       {"ng", "national guard", "нац. гвард", "национальн"},
+	"фиб":      {"fib"},
+	"лспд":     {"lspd"},
+	"ems":      {"ems", "больниц"},
+	"емс":      {"ems"},
+	"гос":      {"гос", "state"},
+	"крайм":    {"crime", "крайм", "криминал"},
+	"капт":     {"капт", "войн", "территори"},
+	"варн":     {"warn"},
+	"бан":      {"ban", "бан"},
+	"джаил":    {"jail"},
+	"деморган": {"demorgan"},
+	"мут":      {"mute"},
+	"твинк":    {"твинк", "дополнительн", "второ"},
+}
+
+// Expand даёт варианты слова для поиска (само слово + синонимы).
+func Expand(w string) []string {
+	out := []string{w}
+	if a, ok := synonyms[w]; ok {
+		for _, x := range a {
+			if x != w {
+				out = append(out, x)
+			}
+		}
+	}
+	return out
+}
+
+var tokRe = regexp.MustCompile(`[\p{L}\p{N}]+`)
+
+func wordSet(s string) map[string]bool {
+	m := map[string]bool{}
+	for _, w := range tokRe.FindAllString(s, -1) {
+		m[w] = true
+	}
+	return m
+}
+
+// termIn: короткие сокращения (до 3 букв) ищем только целым словом,
+// иначе «дм» находилось бы внутри «администрации».
+func termIn(text string, words map[string]bool, w string) bool {
+	if isShortAbbr(w) {
+		return words[w]
+	}
+	return strings.Contains(text, w)
+}
+
+func termCount(text string, words map[string]bool, w string) int {
+	if isShortAbbr(w) {
+		if words[w] {
+			return 1
+		}
+		return 0
+	}
+	return strings.Count(text, w)
+}
+
+func isShortAbbr(w string) bool {
+	if len([]rune(w)) > 3 {
+		return false
+	}
+	if _, ok := synonyms[w]; ok {
+		return true
+	}
+	for _, alts := range synonyms {
+		for _, a := range alts {
+			if a == w {
+				return true
+			}
+		}
+	}
+	return false
 }

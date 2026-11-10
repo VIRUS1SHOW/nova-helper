@@ -3,198 +3,198 @@
     {
       "name": "01-obshie-pravila.txt",
       "title": "Общие правила проекта",
-      "sha256": "5c0529a6685e4bde0acc32782735ed3175e87a3d328b9e9ff4317106b058d595"
+      "sha256": "8c92eec84ff87aeb6b1eafec6ee527a6fd654748262b39c3d5b3c3b4e1fcbd60"
     },
     {
       "name": "02-kriminal.txt",
       "title": "Правила криминальных организаций",
-      "sha256": "1d66d86064a2f95c715b49492665e90cff5a380428773bbc477aefc71570cd88"
+      "sha256": "66b415d4502d7436c7b1990bde5f9f8efada4c07d9703563e45754162d874bad"
     },
     {
       "name": "03-gos.txt",
       "title": "Общие правила государственных структур",
-      "sha256": "9ecf3ba024fe352cb60aef1fc45f3a651752f84eca9894734d0f058c340c4fcb"
+      "sha256": "60eff92bf640824d1579215cc4f01c6f84d4fcebda6b4ccfabf2890b26b3fef2"
     },
     {
       "name": "04-otstraneniya.txt",
       "title": "Правила отстранений от семейных мероприятий",
-      "sha256": "185d004e857201051a332c439fafcc81c358ca96eb01b7c7c20806d4b9347b12"
+      "sha256": "e26a15a9d0cab1d42a438bcbe9d7d9f05db8d1bc2118d12d599c6c393b5cf83f"
     },
     {
       "name": "05-pohishcheniya.txt",
       "title": "Правила похищений и ограблений",
-      "sha256": "dc6ba850d400254b6a996fedb3df07aa648d20ec28ab45aa9793faef06b246b9"
+      "sha256": "e7bdfbbe9eddb95cd57336c80a47d9fb1729f45dad664cb94df5139f1c5a6b34"
     },
     {
       "name": "06-lidery.txt",
       "title": "Правила для лидеров организаций",
-      "sha256": "d34a6d5fc09efa2a68d98c8f1991bf112bab3b4cfb441bc34c9e6f0efae80f88"
+      "sha256": "e607d8935ae7b3ae87f40495da2ccc072626d2a9c08e9dfd2c8774e4855d739e"
     },
     {
       "name": "07-zelenye-zony.txt",
       "title": "Правила зелёных зон",
-      "sha256": "5d43def74be9f46a96670228e9fb27e8cbcaf2a6ec255bd2d99ff017f434e697"
+      "sha256": "7c4f4b86b29824c7db97171e9d4526d84eeb3d9bdd9f8dff7c6fcd5175fca484"
     },
     {
       "name": "08-proverki-po.txt",
       "title": "Правила проверок на стороннее ПО",
-      "sha256": "d93d9eab98b6d6aef5530ebf423a7eb1dd21f1f95c67334a148ca8f181716e4a"
+      "sha256": "330c354a747b4fbb703196e2dd15fdbca5375861af912159534cea22fc23e89f"
     },
     {
       "name": "09-meropriyatiya.txt",
       "title": "Общие правила мероприятий",
-      "sha256": "2159c1b7fbc1b119c0dc3b4339b13a01f2864fa39354dbc73d32820a81341401"
+      "sha256": "8292e2f3a93ec42589f95135af2c41005e2a5f8eba42f0381f884c727cb7fd1b"
     },
     {
       "name": "10-ograblenie-bankomata.txt",
       "title": "Правила событий «Ограбление банкомата», «Ограбление домов», «Ограбление магазина 24/7 и Аммунации»",
-      "sha256": "c02fc74520c2b3c345c3835c422e83578949883782ba83cbc5b560a6388bcfb8"
+      "sha256": "e2cd5bc84b8d20c925a27f59f68901f8cec353cff752c8ff24edeac44fd330ab"
     },
     {
       "name": "11-klady.txt",
       "title": "Правила мероприятия «Сбор общих кладов»",
-      "sha256": "b9d81dc6b79c3a0bcca7357b986f4435aeeacd621ff54e628bab15b7d6f894ea"
+      "sha256": "55e69e38a84cbd2dc245a929213beaa22161abcbc64b4d6a1434d4013a363e63"
     },
     {
       "name": "12-ugon.txt",
       "title": "Правила угона автомобилей",
-      "sha256": "732f8b5152b739cef893422a9c066644af54f7e6634b6ef5e9349756bc163f62"
+      "sha256": "21d72ed707f5637174ee416094c631fd2b2ee5fe03990985021c9db7d54ad057"
     },
     {
       "name": "13-stanok.txt",
       "title": "Правила мероприятия «Станок для печати денег»",
-      "sha256": "58cf37cfcf122b07c8e4b94076d20ce985dc5d2271d6c60605c5b9e45b846265"
+      "sha256": "1245caf2986c79965d5cf34df3f2e02670082e072b53a701f35adac61f27ce93"
     },
     {
       "name": "14-kontrol-shtata.txt",
       "title": "Правила мероприятия «Контроль штата»",
-      "sha256": "42ed428aff01e46942bbaa641eb150af5b228e88ebca5d4013b9727ed5fd3d01"
+      "sha256": "8102666b5a93a4a1235af82f4cf6ac62d51932a7fdd59e40a77743b7ef6af293"
     },
     {
       "name": "15-vzlom-dannyh.txt",
       "title": "Правила события «Взлом данных»",
-      "sha256": "6a899e880db70902bcd6327ee86427733d3bbc2dc66a5345e41f2adaf19c140e"
+      "sha256": "66fb3764eed863cc11343f7451cb265b3354bd777b904282ac618b5c025e6e6a"
     },
     {
       "name": "16-postavki.txt",
       "title": "Правила перевозок и перекрытия поставок",
-      "sha256": "9a74dd7bab67794389608b9162ba148e120125117631796fc43837db89c797d9"
+      "sha256": "1fb1ec0eb90e323a62719f0823cdc7745c4d138e4de5a6f40abca83cdc489c04"
     },
     {
       "name": "17-inkassaciya.txt",
       "title": "Правила мероприятия «Ограбление инкассации»",
-      "sha256": "880056a628d7cc20f52f02cc7d8ce9181887cf0a2b622032c80f2157e0457b56"
+      "sha256": "df044f9ef7a184deccff7d582d746ed56ae73257cfc5c454be92ad9d32e2cb67"
     },
     {
       "name": "18-chernyi-rynok.txt",
       "title": "Правила проведения рейда на «Черный рынок»",
-      "sha256": "4cc700f7b9be08808971d4997d723ea79d31a1e3b2a2b6450010d7706a74d96a"
+      "sha256": "e958c6b1d19ace1a7f90c8b56e1678dc1a8485461ecdad3e2aaa640d6531e59c"
     },
     {
       "name": "19-zavod-tiketov.txt",
       "title": "Правила мероприятия «Завод RP тикетов»",
-      "sha256": "670968a4f2116cb7b3fbbd7535d738193b9aefaae1ce83c687b181a6db0898d6"
+      "sha256": "589ce27627cbc0fd579c109721a487754aece614538fee20f94337c89563a6ef"
     },
     {
       "name": "20-morskoi-boi.txt",
       "title": "Правила мероприятия «Морской Бой»",
-      "sha256": "f86858a40d20daac6259aca17875b82f52154e8310faa7181f79bfc5b959cd9e"
+      "sha256": "12397f89fcde7bac1278a558f1a332dbcdebd177259ed1e273b2fd7598b275d6"
     },
     {
       "name": "21-avianosec.txt",
       "title": "Правила мероприятия «Захват авианосца»",
-      "sha256": "a9b3469ac8d9029dcb6fc4627eb4ec3155b3a61520b75fc450a35d1e6bf6924c"
+      "sha256": "b168562a46ffccbe079ff26eccf64b3b8f5fac917b56e692fac7a2bf422695f6"
     },
     {
       "name": "22-karavan.txt",
       "title": "Правила перевозки и перекрытия Каравана",
-      "sha256": "896d63ba8d8dfd269fe0ebc7d1a28eece3c01a5b1969f4f5fbf4f016b0bb4b65"
+      "sha256": "bcb7a80f8efb000bc59a0a9c957a3e91f70c42c0eb8fbba780925c208db4994e"
     },
     {
       "name": "23-parashyuty-fz.txt",
       "title": "Правила нападения/защиты парашютов на территории Fort Zancudo",
-      "sha256": "848bd6662a24e1772637b7de7ef3ebd390e0d1c3f23e4c28d96185f49c748c86"
+      "sha256": "07254d96cf05c542f5d0c53bd701e9f00911b1c43813e975085752eacfaaf666"
     },
     {
       "name": "24-zahvat-tyurmy.txt",
       "title": "Правила мероприятия «Захват тюрьмы»",
-      "sha256": "84a50ef2f1bf7502508fb8f29968a694697b2334121d5fca1833deafb72cd036"
+      "sha256": "25abfc0707a4b71d22947b6edf79e19fdb913c82fb9941a11b3e92990adaf5d4"
     },
     {
       "name": "25-fort-zancudo.txt",
       "title": "Правила нападения на Форт-Занкудо (National Guard)",
-      "sha256": "6d0963cbd79add50f8b1cf7161259c122ef18dc84c89847720b8a08db002f27b"
+      "sha256": "d3b18e5248626dff26ab61fefc65e85d47f8c6ec46babde4d376590c8034d3a5"
     },
     {
       "name": "26-ograblenie-banka.txt",
       "title": "Правила мероприятия «Ограбление банка»",
-      "sha256": "7bd3a209a061d9ea8c3352f0064904a99605cd9c40b78f3d4b66369f5850ca6f"
+      "sha256": "ce3610cb4d12cd4a23df6f4c0172608875b59fb8c92db3e0a9d8b2f3bacc7da3"
     },
     {
       "name": "27-submarina.txt",
       "title": "Правила мероприятия «Поставка на субмарине»",
-      "sha256": "a33c99abd5bd7df6432830eee893434e9f443320e2cc63d0edb2b091d2b2a43e"
+      "sha256": "0d4de6e204f579c9536a6c640c83aecfcacae28ad7a2993051edf7334a6c791a"
     },
     {
       "name": "28-terakty.txt",
       "title": "Правила проведения террористических актов",
-      "sha256": "e87cf1f31c5bc2dcf0d7e393d6d92256e2b999ea7253d578e2a9008f9e187b93"
+      "sha256": "68056461292b646bcec512c8589359cdf75d8b1bd1a9e0a0863664e4bac75c34"
     },
     {
       "name": "29-reidy-gos.txt",
       "title": "Правила проведения рейдов государственных структур на криминальные организации",
-      "sha256": "ce41a4af7270e5621de40a5aefe50e05132ee85785081f300825a9eb49e24934"
+      "sha256": "1b645993ec506cf4dd02187bf64f42f0a5aad7c0758b99f7cc214221b7b9440b"
     },
     {
       "name": "30-voina-za-territorii.txt",
       "title": "Правила войны за территории",
-      "sha256": "f32ec7ef5624291189c34049cfdb201caa6c1363d831fac3d4f88e822ec7c6b8"
+      "sha256": "4ce3270103e182b02d3992b21c0f56210fcc803e2868827afcf6248eff410dae"
     },
     {
       "name": "31-tituly-lor.txt",
       "title": "Титульные районы и лор у банд",
-      "sha256": "c837d1c072cdf7f88b8238f4ac9316bf27462ea12066c0559b33b5524afacae2"
+      "sha256": "261330d82ae82352e76628b935b16f3d062804799eabdbc899a231e77cbc603a"
     },
     {
       "name": "32-ierarhiya-vnutri.txt",
       "title": "Система внутрифракционной иерархии",
-      "sha256": "7e2285a4076e7c7abe4453ee9d0a0f2ed8228a1962d6e9358d99f5604ccabffb"
+      "sha256": "07acfc2c71835369bb3eb2084ea2065cbb9e9741da7526bf555f14ce11e1b63b"
     },
     {
       "name": "33-ierarhiya-kriminal.txt",
       "title": "Система иерархии криминальных структур",
-      "sha256": "8e918f09f676c4b2e657b29e5d20583be05419f494489f162d069acc71a29fcf"
+      "sha256": "7cf23965e7fb6f6c6c53b251780bd7110fe9e526985515d26b0ab09caefdef7d"
     },
     {
       "name": "34-vybory.txt",
       "title": "Порядок проведения выборов и агитации",
-      "sha256": "7cd1f475e22d771ac3bb796f033bacaaac2ee6ded700d23c9e92b2b6677af31b"
+      "sha256": "4888d1cfc56c0da89bc98a1c26ddfdda56875132e623ddab4e1e0e4b31f0d0ff"
     },
     {
       "name": "35-doprosy.txt",
       "title": "Правила проведения допросов для FIB/LSPD/SAHP",
-      "sha256": "4908f9809988aa3bebb1edc1539feb843819c7077eae307ddb08d764dc79b1b8"
+      "sha256": "1bbc2779c914cf0c7f7da856baa78914b6e4d2949530c9dadccfebe446003106"
     },
     {
       "name": "36-neofic-semeinye.txt",
       "title": "Общие правила семейных неофициальных организаций",
-      "sha256": "6a4c9573bd4695d616172f0586fb01e2db7286ee0cbc01feaedf600f8a38f6f4"
+      "sha256": "667318a151f3a6c620feb4d6914c27af895fd6fe0e4af30c3c2f1ee45fce3df4"
     },
     {
       "name": "37-neofic-meropriyatiya.txt",
       "title": "Общие правила мероприятий от кураторов направления (неофициальные организации)",
-      "sha256": "8581c90f719de259ca4f987905a5ea31b713274496745ae26401f40a7ebba759"
+      "sha256": "fef9588dd2320817df40b5fb5b8497c708d0e8dd01c1a1ba34eef47a189d50cf"
     },
     {
       "name": "38-neofic-ierarhiya.txt",
       "title": "Система иерархии неофициальных организаций",
-      "sha256": "6961608a9ce63c6a508214e044f8f16de0e708a9ff739810cba883bd400b9db1"
+      "sha256": "bae52d6ae025700079ac728c6c34937588957247193f230e2a9c07dae4040c87"
     }
   ],
   "app": {
-    "version": "1.2.0",
+    "version": "1.3.0",
     "file": "NovaHelper.exe",
-    "sha256": "f50412b8124243c4e4e53e2bdba49f3ddfb882791c370b663325e566c83cfcb5",
-    "notes": "Nova Helper 1.2.0: новое название, все 38 документов правил с forum.nova-rp.com"
+    "sha256": "001309e7615cf85a86df121922dd76fefa4e7aa638d4cc72ffaf296dbedbe79c",
+    "notes": "Группы документов, новое оформление с анимациями, цвета и прозрачность, вопросы к ИИ (Алиса AI, Claude, DeepSeek и др.)"
   }
 }
