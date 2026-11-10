@@ -1,7 +1,7 @@
 package main
 
 // Автообновление: правила и сама программа скачиваются из репозитория
-// github.com/dashagri/novarp-rules (файл manifest.json описывает, что там лежит).
+// github.com/VIRUS1SHOW/nova-helper (файл manifest.json описывает, что там лежит).
 
 import (
 	"crypto/sha256"
@@ -21,7 +21,7 @@ import (
 
 const (
 	appVersion  = "1.2.0"
-	updateBase  = "https://raw.githubusercontent.com/dashagri/novarp-rules/main/"
+	updateBase  = "https://raw.githubusercontent.com/VIRUS1SHOW/nova-helper/main/"
 	managedList = "rules-managed.txt" // какие файлы в rules пришли из обновлений
 )
 

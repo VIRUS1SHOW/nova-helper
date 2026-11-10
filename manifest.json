@@ -192,9 +192,9 @@
     }
   ],
   "app": {
-    "version": "1.1.0",
-    "file": "NovaRP-Spravochnik.exe",
-    "sha256": "84b4cf9b93c010ba450660e13ba17847318e19246e7279e1a8ef20f05ba18ec9",
-    "notes": "Автообновление правил и программы"
+    "version": "1.2.0",
+    "file": "NovaHelper.exe",
+    "sha256": "c4e16bde9e926bd0901d8e3815b91d0016c2853348cebb1961d96a44b019c6c9",
+    "notes": "Nova Helper 1.2.0: новое название, все 38 документов правил с forum.nova-rp.com"
   }
 }
