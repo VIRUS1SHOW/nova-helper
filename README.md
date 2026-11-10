@@ -15,6 +15,14 @@
 | `tools/make_manifest.py` | Пересобирает `manifest.json` после изменений |
 | `Instrukciya.txt` | Инструкция для пользователя |
 
+## Установщик
+
+`setup/NovaHelper-Setup.exe` — один файл для раздачи игрокам. Ставит программу в `%LOCALAPPDATA%\Programs\Nova Helper` (без прав администратора), создаёт ярлыки, запись в «Приложения и возможности» и `Uninstall.exe`. Повторный запуск обновляет программу, сохраняя настройки и избранное.
+
+Собрать: `sh tools/build_installer.sh` (собирает и программу, и установщик).
+
+Скачать: https://github.com/VIRUS1SHOW/nova-helper/raw/main/setup/NovaHelper-Setup.exe
+
 ## Как обновить правила
 
 1. Поменять или добавить файл в `rules/` (формат описан в `Instrukciya.txt`).
