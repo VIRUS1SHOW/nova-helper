@@ -3,17 +3,17 @@
     {
       "name": "01-obshie-pravila.txt",
       "title": "Общие правила проекта",
-      "sha256": "3f47dd88c8b102e74e136e754b537433966c82562410edb54ff1947f6d2530b0"
+      "sha256": "5c0529a6685e4bde0acc32782735ed3175e87a3d328b9e9ff4317106b058d595"
     },
     {
       "name": "02-kriminal.txt",
       "title": "Правила криминальных организаций",
-      "sha256": "135f1318f314341d382a1dbf2f85acf029a982d89105db5f848adf6bc6ac2b70"
+      "sha256": "1d66d86064a2f95c715b49492665e90cff5a380428773bbc477aefc71570cd88"
     },
     {
       "name": "03-gos.txt",
       "title": "Общие правила государственных структур",
-      "sha256": "40c75133e3ea7b7a0767ea50049cdcec2340354d5c360b51e6f1ee32da29d262"
+      "sha256": "9ecf3ba024fe352cb60aef1fc45f3a651752f84eca9894734d0f058c340c4fcb"
     }
   ],
   "app": {
