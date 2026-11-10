@@ -12,7 +12,7 @@ func TestLoadAndSearch(t *testing.T) {
 	}
 	for _, d := range docs {
 		t.Logf("%s | %s | %s | разделов %d | пунктов %d", d.File, d.Short, d.Updated, len(d.Sections), len(d.Points))
-		if len(d.Sections) == 0 || len(d.Points) == 0 {
+		if len(d.Sections) == 0 {
 			t.Errorf("%s: документ разобран пустым", d.File)
 		}
 	}

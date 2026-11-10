@@ -18,7 +18,7 @@ func TestUpdater(t *testing.T) {
 	man := Manifest{
 		Rules: []ManFile{{Name: "01-a.txt", SHA256: sha([]byte(files["rules/01-a.txt"]))},
 			{Name: "02-b.txt", SHA256: sha([]byte(files["rules/02-b.txt"]))}},
-		App: AppInfo{Version: "1.2.0", File: "new.exe", SHA256: sha([]byte(files["app/new.exe"]))},
+		App: AppInfo{Version: "99.0.0", File: "new.exe", SHA256: sha([]byte(files["app/new.exe"]))},
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path[1:]
