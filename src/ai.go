@@ -32,9 +32,9 @@ type AIProvider struct {
 }
 
 var AIProviders = []AIProvider{
-	{ID: "yandex", Name: "Алиса AI (Яндекс)", Kind: "openai", BaseURL: "https://llm.api.cloud.yandex.net/v1",
+	{ID: "yandex", Name: "Алиса AI (Яндекс)", Kind: "openai", BaseURL: "https://ai.api.cloud.yandex.net/v1",
 		Model: "gpt://{folder}/aliceai-llm-flash", NeedKey: true, NeedFold: true, KeyHeader: "Api-Key",
-		Hint: "Yandex AI Studio: API-ключ сервисного аккаунта и ID каталога. Модели: aliceai-llm-flash (быстрая), aliceai-llm."},
+		Hint: "aistudio.yandex.cloud → «Создать API-ключ»; ID каталога — в адресе консоли. Модели: aliceai-llm-flash (быстрая), aliceai-llm."},
 	{ID: "claude", Name: "Claude (Anthropic)", Kind: "anthropic", BaseURL: "https://api.anthropic.com",
 		Model: "claude-haiku-5-5", NeedKey: true,
 		Hint: "Ключ из console.anthropic.com. Модели: claude-haiku-5-5 (быстрая), claude-sonnet-5-5 (умнее)."},
