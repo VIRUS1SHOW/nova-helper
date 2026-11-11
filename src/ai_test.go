@@ -132,7 +132,16 @@ func TestCitedAndSearchSynonyms(t *testing.T) {
 	if len(found) == 0 {
 		t.Error("поиск «дм» ничего не нашёл")
 	}
-	if g := Groups(docs); len(g) != 5 {
+	if g := Groups(docs); len(g) != 6 {
 		t.Errorf("групп: %v", g)
+	}
+}
+
+func TestCitedArticles(t *testing.T) {
+	docs, _ := LoadDocs("../rules")
+	ctx := Relevant(docs, "юрисдикция FIB", 10)
+	c := Cited("FIB может действовать по всему штату (ст. 3, «Юрисдикция»).", ctx)
+	if len(c) == 0 || c[0].Num != "ст. 3" {
+		t.Errorf("статьи: %v", c)
 	}
 }

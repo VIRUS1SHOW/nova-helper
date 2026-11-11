@@ -189,12 +189,167 @@
       "name": "38-neofic-ierarhiya.txt",
       "title": "Система иерархии неофициальных организаций",
       "sha256": "bae52d6ae025700079ac728c6c34937588957247193f230e2a9c07dae4040c87"
+    },
+    {
+      "name": "50-konstituciya.txt",
+      "title": "Конституция Штата San-Andreas",
+      "sha256": "2928b62c27b2fd8e51cb6ab2cb0dc93eaba35f4dfdb187e87fe455437ca399a4"
+    },
+    {
+      "name": "51-ugolovnyi-kodeks.txt",
+      "title": "Уголовный Кодекс Штата San-Andreas",
+      "sha256": "138d6f3d02573b52b33bfd11775622d0850c1cbbe83e83ab377864d81c4bbefd"
+    },
+    {
+      "name": "52-administrativnyi-kodeks.txt",
+      "title": "Административный Кодекс Штата San Andreas",
+      "sha256": "d0dddf0471a051c455679bddab1eb063ba6d8419e9562ae5154a48ef53a4b1f4"
+    },
+    {
+      "name": "53-processualnyi-kodeks.txt",
+      "title": "Процессуальный Кодекс Штата San Andreas",
+      "sha256": "f021c873fcbd2c95cef7115ab5e95a70f2e05e41201807a7b8889c4ce352b054"
+    },
+    {
+      "name": "54-dorozhnyi-kodeks.txt",
+      "title": "Дорожный Кодекс Штата San Andreas",
+      "sha256": "b91a59bba0a24edda219fd6031cb0daa46b6ff33b59b551ea6bf49e85e5c5af1"
+    },
+    {
+      "name": "55-sudebnyi-kodeks.txt",
+      "title": "Судебный Кодекс Штата San-Andreas",
+      "sha256": "2b06e6dd85a14436139d884cbf55a2f145ee9e44abec0fd1af50acdf0f443114"
+    },
+    {
+      "name": "56-trudovoi-kodeks.txt",
+      "title": "Трудовой Кодекс Штата San-Andreas",
+      "sha256": "a13c33fc4504952c910d8b9e61af071e113980f3b77b2aa1554c813176b4520e"
+    },
+    {
+      "name": "57-eticheskii-kodeks.txt",
+      "title": "Этический Кодекс Штата San-Andreas",
+      "sha256": "7e61758ebd58c42ba2a537be007df71d7aff987a67c5ca7ba521cecc687f57d9"
+    },
+    {
+      "name": "60-zakon-410613.txt",
+      "title": "Закон о статусе United States Secret Service [USSS]",
+      "sha256": "f816581a9325697fa126440ecacdf107e4dd07fbbf799ee47b094194ccf2f62d"
+    },
+    {
+      "name": "61-zakon-410612.txt",
+      "title": "Закон о статусе Emergency Medical Service [EMS]",
+      "sha256": "4ed56f393d5fbe7ba85fc27a1db0e4ff175115cdad482d12b7dc0990103cc43a"
+    },
+    {
+      "name": "62-zakon-410611.txt",
+      "title": "Закон о статусе Federal Investigation Bureau [FIB]",
+      "sha256": "cba262ae417fa168b7812fbe5850ef90d0bfae886213c5076b988d69769f43b0"
+    },
+    {
+      "name": "63-zakon-410610.txt",
+      "title": "Закон о статусе San Andreas Highway Patrol [SAHP]",
+      "sha256": "65551ffac4fdd44ab131c094443380fec04d762cf024a19816f39b2aa8e1b7a6"
+    },
+    {
+      "name": "64-zakon-410609.txt",
+      "title": "Закон о статусе Los Santos Police Department [LSPD]",
+      "sha256": "89e72329f00ba7f7d04989985a031b02673abc5cc9a2c15016ac76d0fbed28b4"
+    },
+    {
+      "name": "65-zakon-410608.txt",
+      "title": "Закон о статусе National Guard [NG]",
+      "sha256": "cd4e5fc8046e0f6f6d4e5093fd5e4e822a7a7057bc246b25cf9cd306bcb3a101"
+    },
+    {
+      "name": "66-zakon-410607.txt",
+      "title": "Закон об особых положениях",
+      "sha256": "8d992fd1e72005a4c2e72a6f7d107c3400458ddf3224fd4b2c8ffa4203b37cef"
+    },
+    {
+      "name": "67-zakon-410606.txt",
+      "title": "Закон о документообороте",
+      "sha256": "52884c50edf398d4ceedf70d13c1dc1e743d10d0d3d9c8e429cb498ad6c7cc4d"
+    },
+    {
+      "name": "68-zakon-410605.txt",
+      "title": "Закон о Правительстве штата San Andreas",
+      "sha256": "011cffcd0c188cc8c538f57084d685e61d60393f75fec2bf0985e591f5acf7d7"
+    },
+    {
+      "name": "69-zakon-410604.txt",
+      "title": "Закон \"О Юрисдикции Штата San-Andreas\"",
+      "sha256": "ea1a61aa41cd1fcb0a3250d523f3253953788ea38549c2645d3008c5387a6a20"
+    },
+    {
+      "name": "70-zakon-410603.txt",
+      "title": "Закон \"Об обороте оружия\"",
+      "sha256": "c413097e6850e540a84d03b53b0207fe9b58f728d61af7b5df8a5c0851c32611"
+    },
+    {
+      "name": "71-zakon-410602.txt",
+      "title": "Закон о посещении государственных учреждений",
+      "sha256": "6fc042bd422339302957f7ab4ee0fb5a45a8e7c3c56b635ab87fe66c6014ffb5"
+    },
+    {
+      "name": "72-zakon-410601.txt",
+      "title": "Закон «О неприкосновенности должностных лиц»",
+      "sha256": "365a53729242277307ab1ab1328763aa93b9f120cd28faf7f662320d5ec70023"
+    },
+    {
+      "name": "73-zakon-410600.txt",
+      "title": "Закон \"О парковках в общественных местах\"",
+      "sha256": "47d99bb566847b4ce99cecb55dd8254ada51483bd21b26d22141f72e4b738229"
+    },
+    {
+      "name": "74-zakon-410599.txt",
+      "title": "Закон о Прокуратуре",
+      "sha256": "a2f0e90194d333a3e7c59c5778fae9509387fd23dd10cd617af11fae068d1591"
+    },
+    {
+      "name": "75-zakon-410598.txt",
+      "title": "Закон о статусе Исправительного Учреждения",
+      "sha256": "3f8b50bae5fe173e48359736542754907afc31c2aa4d184b2666144f426cecbf"
+    },
+    {
+      "name": "76-zakon-410597.txt",
+      "title": "Закон \"O государственной тайне штата SA\"",
+      "sha256": "4b12ff693a1ad436cc8f83625ed990888595ce06194efb2a67c1ccefe40a45c1"
+    },
+    {
+      "name": "77-zakon-410596.txt",
+      "title": "Закон об частном предпринимательстве",
+      "sha256": "2122cccc24c20b3bad4f4c9056538913bf7b646cae97790cd4ec304fc16b2fd3"
+    },
+    {
+      "name": "78-zakon-410594.txt",
+      "title": "Закон \"Об адвокатской деятельности\"",
+      "sha256": "15f2547099542aeb6ff422ed816ba151514499c64586a45cba3b4eca714f7456"
+    },
+    {
+      "name": "79-zakon-410592.txt",
+      "title": "Закон \"О борьбе с организованной преступностью\"",
+      "sha256": "b889607553e94e5ccd191ad60e5a3bd6f0260f03c929c45eeb4a262e67e034d0"
+    },
+    {
+      "name": "80-zakon-410591.txt",
+      "title": "Закон \"О государственной службе\"",
+      "sha256": "ff4b751479a708e362be032204d31fab13b6ec220e083990952de6adfe801f0f"
+    },
+    {
+      "name": "81-zakon-410590.txt",
+      "title": "Закон «О средствах массовой информации штата San Andreas»",
+      "sha256": "54b9e05137756ff0a0060d10a94572fb949e69ab0e011be3c2d9f7826243b45e"
+    },
+    {
+      "name": "82-zakon-410589.txt",
+      "title": "Закон об охоте и о сохранении охотничьих ресурсов",
+      "sha256": "e53d0b2a8089b0e66afc125fc00e14db5d5d57b60f411617ca749ad32d1a9ea8"
     }
   ],
   "app": {
     "version": "1.3.0",
     "file": "NovaHelper.exe",
-    "sha256": "6618cdf3aa2bd555acc8b33186291905b34efb50c500a488c29eb8cb5d18f81b",
-    "notes": "Группы документов, новое оформление с анимациями, цвета и прозрачность, вопросы к ИИ (Алиса AI, Claude, DeepSeek и др.)"
+    "sha256": "cdffb61cd602200de41bce12edb778ca15dfc5b1e6e102d88fd5f88b3baf3ac3",
+    "notes": "Добавлены законы штата: Конституция, кодексы и 23 закона (группа «Законы штата»). ИИ теперь учитывает законы и ссылается на статьи."
   }
 }

@@ -377,9 +377,13 @@ func SortByDoc(pts []*Point, docs []*Doc) {
 
 // answerLine выводит строку ответа, выделяя ссылки на пункты.
 func (r *rtfB) answerLine(s string) {
-	locs := citeRe.FindAllStringIndex(s, -1)
+	locs := append(citeRe.FindAllStringIndex(s, -1), artCiteRe.FindAllStringIndex(s, -1)...)
+	sort.Slice(locs, func(a, b int) bool { return locs[a][0] < locs[b][0] })
 	last := 0
 	for _, l := range locs {
+		if l[0] < last {
+			continue
+		}
 		if l[0] > last {
 			r.span(fmt.Sprintf("\\cf%d", cText), s[last:l[0]])
 		}

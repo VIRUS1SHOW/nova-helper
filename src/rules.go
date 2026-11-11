@@ -55,7 +55,9 @@ type Doc struct {
 
 var (
 	pointRe = regexp.MustCompile(`^(\d+(?:\.\d+)+)\.?\s+(.+)$`)
-	noteRe  = regexp.MustCompile(`(?i)^(Примечание|Уточнение|Исключение|Пояснение|Примеры|Пример|Нарушением считается|Запрещены|Агрессивными действиями считается|IC причины для убийства)(\s*\d*)\s*:\s*`)
+	// статьи законов: «Статья 5. Текст» — тоже пункт (номер «ст. 5»)
+	articleRe = regexp.MustCompile(`^Статья\s+(\d+(?:\.\d+)*)\.?\s+(.+)$`)
+	noteRe    = regexp.MustCompile(`(?i)^(Примечание|Уточнение|Исключение|Пояснение|Примеры|Пример|Нарушением считается|Запрещены|Агрессивными действиями считается|IC причины для убийства)(\s*\d*)\s*:\s*`)
 )
 
 // LoadDocs читает все .txt из папки правил (по алфавиту).
@@ -153,7 +155,10 @@ func ParseDoc(src string) *Doc {
 			pt = nil
 			continue
 		}
-		if m := pointRe.FindStringSubmatch(line); m != nil {
+		if m := articleRe.FindStringSubmatch(line); m != nil {
+			line = "ст. " + m[1] + " " + m[2]
+		}
+		if m := pointOrArticle(line); m != nil {
 			ensure()
 			text, pun := SplitPun(m[2])
 			pt = &Point{Num: m[1], Text: text, Pun: pun, Doc: d, Sec: sec, Index: len(d.Points)}
@@ -421,4 +426,13 @@ func isShortAbbr(w string) bool {
 		}
 	}
 	return false
+}
+
+var artPointRe = regexp.MustCompile(`^(ст\. \d+(?:\.\d+)*)\s+(.+)$`)
+
+func pointOrArticle(line string) []string {
+	if m := pointRe.FindStringSubmatch(line); m != nil {
+		return m
+	}
+	return artPointRe.FindStringSubmatch(line)
 }

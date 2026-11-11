@@ -262,7 +262,7 @@ func Relevant(docs []*Doc, q string, limit int) []*Point {
 
 const aiSystem = `Ты — помощник по правилам GTA 5 RolePlay-проекта NOVA RP. Отвечай по-русски, коротко и по делу.
 Опирайся ТОЛЬКО на пункты правил, которые даны ниже. Ничего не выдумывай.
-После каждого утверждения указывай пункт в формате (п. 4.1, «Общие правила»).
+После каждого утверждения указывай пункт в формате (п. 4.1, «Общие правила»), а для статей законов — (ст. 5, «Юрисдикция»).
 Если в данных пунктах ответа нет — честно скажи, что в правилах это прямо не описано, и посоветуй уточнить у администрации.
 Если за нарушение положено наказание, назови его так, как в правилах.
 Пункты с пометкой «Законы штата» — это IC-законы штата San Andreas (их применяют полиция, прокуратура и суд в игре: розыск, срок, штраф).
@@ -469,14 +469,28 @@ func httpProblem(code int, raw []byte) string {
 var citeRe = regexp.MustCompile(`(?i)(?:п\.|пункт[а-я]*|пп\.)\s*((?:\d+(?:\.\d+)+)(?:\s*(?:,|и)\s*\d+(?:\.\d+)+)*)(?:[^«\n]{0,8}«([^»\n]{1,60})»)?`)
 var numInRe = regexp.MustCompile(`\d+(?:\.\d+)+`)
 
+// ссылки на статьи законов: «ст. 5», «статья 12»
+var artCiteRe = regexp.MustCompile(`(?i)(?:ст\.|стать[а-я]*)\s*(\d+(?:\.\d+)*)(?:[^«\n]{0,8}«([^»\n]{1,60})»)?`)
+
 // Cited — пункты из контекста, на которые сослался ИИ (в порядке упоминания).
 // Номера пунктов повторяются в разных документах, поэтому учитываем название в «ёлочках».
 func Cited(answer string, ctx []*Point) []*Point {
 	var out []*Point
 	seen := map[*Point]bool{}
+	type ref struct {
+		nums []string
+		doc  string
+	}
+	var refs []ref
 	for _, m := range citeRe.FindAllStringSubmatch(answer, -1) {
-		docName := Norm(strings.TrimSpace(m[2]))
-		for _, n := range numInRe.FindAllString(m[1], -1) {
+		refs = append(refs, ref{numInRe.FindAllString(m[1], -1), m[2]})
+	}
+	for _, m := range artCiteRe.FindAllStringSubmatch(answer, -1) {
+		refs = append(refs, ref{[]string{"ст. " + m[1]}, m[2]})
+	}
+	for _, rf := range refs {
+		docName := Norm(strings.TrimSpace(rf.doc))
+		for _, n := range rf.nums {
 			var cand []*Point
 			for _, p := range ctx {
 				if p.Num == n {
