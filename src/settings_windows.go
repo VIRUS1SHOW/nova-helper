@@ -28,6 +28,12 @@ const defaultSettings = "; Настройки Nova Helper\r\n" +
 	"Прозрачность=100\r\n" +
 	"Анимации=да\r\n" +
 	"\r\n" +
+	"; Режим поверх игры: окно не сворачивает игру (в игре нужен режим «Окно без рамки»).\r\n" +
+	"; да / нет / компактно (без меню слева)\r\n" +
+	"Оверлей=да\r\n" +
+	"; Непрозрачность окна поверх игры: от 30 до 100\r\n" +
+	"Прозрачность_Оверлея=85\r\n" +
+	"\r\n" +
 	"; ИИ: yandex, claude, deepseek, openrouter, openai, gemini, ollama, lmstudio, custom\r\n" +
 	"; Ключ после сохранения в окне настроек хранится зашифрованным.\r\n" +
 	"ИИ_Сервис=yandex\r\n" +
@@ -80,6 +86,13 @@ func loadSettings() {
 		app.opacity = clampInt(o, 40, 100)
 	}
 	app.anim = !isNo(strings.ToLower(m["анимации"]))
+	ov := strings.ToLower(m["оверлей"])
+	app.overlay = !isNo(ov)
+	app.ovCompact = strings.HasPrefix(ov, "компакт")
+	app.ovOpacity = 85
+	if o, err := strconv.Atoi(strings.TrimSuffix(m["прозрачность_оверлея"], "%")); err == nil {
+		app.ovOpacity = clampInt(o, 30, 100)
+	}
 
 	app.ai = AIConfig{
 		Provider: m["ии_сервис"],
@@ -156,6 +169,15 @@ func saveLookSettings() {
 	} else {
 		setSetting("Анимации", "нет")
 	}
+	switch {
+	case !app.overlay:
+		setSetting("Оверлей", "нет")
+	case app.ovCompact:
+		setSetting("Оверлей", "компактно")
+	default:
+		setSetting("Оверлей", "да")
+	}
+	setSetting("Прозрачность_Оверлея", strconv.Itoa(app.ovOpacity))
 }
 
 func saveSettingOnTop() {

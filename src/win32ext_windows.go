@@ -183,3 +183,12 @@ func unprotect(s string) string {
 	defer pLocalFree.Call(uintptr(unsafe.Pointer(out.PbData)))
 	return string(unsafe.Slice(out.PbData, out.CbData))
 }
+
+var (
+	pGetWindowThreadProcessId = user32.NewProc("GetWindowThreadProcessId")
+	pGetCurrentProcessId      = kernel32.NewProc("GetCurrentProcessId")
+)
+
+func myPID() uintptr { r, _, _ := pGetCurrentProcessId.Call(); return r }
+
+func unsafePtr(p *uint32) unsafe.Pointer { return unsafe.Pointer(p) }

@@ -103,6 +103,12 @@ var app struct {
 	opacity int
 	anim    bool
 
+	// режим поверх игры
+	overlay   bool
+	ovPassive bool
+	ovCompact bool
+	ovOpacity int
+
 	// меню слева и анимации
 	open      map[string]bool
 	openSet   bool
@@ -349,11 +355,11 @@ func layout() {
 	var rc RECT
 	pGetClientRect.Call(app.hwnd, uintptr(unsafe.Pointer(&rc)))
 	w, h := rc.Right, rc.Bottom
-	sw := sideWidth(w)
+	sw, brand := leftWidths(w)
 	th, sh := s(topH), s(statusH)
-	boxX, boxY, boxH := sw+s(16), s(12), s(34)
+	boxX, boxY, boxH := brand+s(16), s(12), s(34)
 	gw, aw := s(34), s(132)
-	if w-sw < s(520) {
+	if w-brand < s(520) {
 		aw = s(40) // узкое окно — только значок
 	}
 	app.rcGear = RECT{w - s(16) - gw, boxY, w - s(16), boxY + boxH}
@@ -361,8 +367,15 @@ func layout() {
 	boxR := app.rcAI.Left - s(10)
 	editH := s(22)
 	pMoveWindow.Call(app.edit, uintptr(boxX+s(34)), uintptr(boxY+(boxH-editH)/2), uintptr(maxI(boxR-boxX-s(44), s(50))), uintptr(editH), 1)
-	pMoveWindow.Call(app.list, 0, uintptr(th), uintptr(sw), uintptr(maxI(h-th-sh, 10)), 1)
-	pMoveWindow.Call(app.rich, uintptr(sw+1), uintptr(th), uintptr(maxI(w-sw-1, 10)), uintptr(maxI(h-th-sh, 10)), 1)
+	richX := sw + 1
+	if sw == 0 {
+		richX = 0
+		pShowWindow.Call(app.list, SW_HIDE)
+	} else {
+		pMoveWindow.Call(app.list, 0, uintptr(th), uintptr(sw), uintptr(maxI(h-th-sh, 10)), 1)
+		pShowWindow.Call(app.list, SW_SHOWNA)
+	}
+	pMoveWindow.Call(app.rich, uintptr(richX), uintptr(th), uintptr(maxI(w-richX, 10)), uintptr(maxI(h-th-sh, 10)), 1)
 	var rr RECT
 	pGetClientRect.Call(app.rich, uintptr(unsafe.Pointer(&rr)))
 	rr.Left += s(26)
@@ -387,15 +400,17 @@ func paintMain() {
 	var rc RECT
 	pGetClientRect.Call(app.hwnd, uintptr(unsafe.Pointer(&rc)))
 	w, h := rc.Right, rc.Bottom
-	sw := sideWidth(w)
+	sw, brand := leftWidths(w)
 	th, sh := s(topH), s(statusH)
 
 	top := RECT{0, 0, w, th}
 	fillRect(hdc, &top, app.brPanel)
 	line := RECT{0, th - s(1), w, th}
 	fillRect(hdc, &line, mustBrush(clrLine))
-	vline := RECT{sw, th, sw + 1, h - sh}
-	fillRect(hdc, &vline, mustBrush(clrLine))
+	if sw > 0 {
+		vline := RECT{sw, th, sw + 1, h - sh}
+		fillRect(hdc, &vline, mustBrush(clrLine))
+	}
 	st := RECT{0, h - sh, w, h}
 	fillRect(hdc, &st, app.brPanel)
 	stl := RECT{0, h - sh, w, h - sh + 1}
@@ -414,7 +429,7 @@ func paintMain() {
 	drawText(hdc, "N", &lr, 0x0001|DT_VCENTER|DT_SINGLELINE) // DT_CENTER
 
 	// название
-	if sw > s(200) {
+	if brand > s(200) {
 		pSelectObject.Call(hdc, app.fBrand)
 		pSetTextColor.Call(hdc, clrText)
 		tr := RECT{lx + ls + s(10), ly - s(1), sw, ly + s(17)}
@@ -426,7 +441,7 @@ func paintMain() {
 	}
 
 	// поле поиска
-	boxX, boxY, boxH := sw+s(16), s(12), s(34)
+	boxX, boxY, boxH := brand+s(16), s(12), s(34)
 	boxR := app.rcAI.Left - s(10)
 	border := mix(clrLine, clrAccent, easeOut(app.focusAmt))
 	if app.focusAmt > 0 {
@@ -575,7 +590,14 @@ func docStatus() string {
 	if d.Updated != "" {
 		upd = "Обновлено " + d.Updated + "   ·   "
 	}
-	return upd + "Правый клик по пункту — копировать или в избранное   ·   Ctrl+I — спросить ИИ   ·   Ctrl+, — настройки   ·   Esc — спрятать"
+	return upd + "Правый клик по пункту — копировать или в избранное   ·   Ctrl+I — спросить ИИ   ·   Ctrl+, — настройки   ·   " + escHint()
+}
+
+func escHint() string {
+	if app.overlay {
+		return "Esc — вернуться в игру"
+	}
+	return "Esc — спрятать"
 }
 
 func showDoc(i int) {
@@ -852,6 +874,10 @@ func handleKey(vk uintptr) bool {
 	ctrl := keyDown(VK_CONTROL)
 	focus := mustFocus()
 	switch {
+	case vk == VK_ESCAPE && app.overlay:
+		// в оверлее Esc сразу возвращает в игру, запрос и ответ остаются на экране
+		backToGame()
+		return true
 	case vk == VK_ESCAPE:
 		switch {
 		case getWindowText(app.edit) != "":
@@ -935,8 +961,12 @@ func isVisible() bool { v, _, _ := pIsWindowVisible.Call(app.hwnd); return v != 
 
 func showWindow() {
 	fg, _, _ := pGetForegroundWindow.Call()
-	if fg != app.hwnd {
+	if fg != app.hwnd && fg != 0 {
 		app.prevFg = fg
+	}
+	if app.ovPassive {
+		setPassive(false)
+		setStatus("Напишите запрос и нажмите Enter   ·   Esc — вернуться в игру (окно останется на экране)")
 	}
 	appearing := !isVisible() || app.fade == fadeOut
 	if appearing && app.anim && app.fade != fadeOut {
@@ -952,7 +982,7 @@ func showWindow() {
 		startFade(fadeIn)
 	}
 	after := HWND_NOTOPMOST
-	if app.onTop {
+	if app.onTop || app.overlay {
 		after = HWND_TOPMOST
 	}
 	pSetWindowPos.Call(app.hwnd, after, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE)
@@ -968,6 +998,7 @@ func hideWindow() { hideWindowHint(false) }
 
 func hideWindowHint(hint bool) {
 	saveState()
+	scrollKeys(false)
 	startFade(fadeOut)
 	if app.prevFg != 0 {
 		if ok, _, _ := pIsWindow.Call(app.prevFg); ok != 0 {
@@ -981,6 +1012,10 @@ func hideWindowHint(hint bool) {
 }
 
 func toggle() {
+	if app.overlay {
+		toggleOverlay()
+		return
+	}
 	if isVisible() && app.fade != fadeOut {
 		if ic, _, _ := pIsIconic.Call(app.hwnd); ic != 0 {
 			showWindow()
@@ -1352,6 +1387,8 @@ func wndProc(hwnd uintptr, msg uintptr, wParam, lParam uintptr) uintptr {
 	case WM_HOTKEY:
 		if wParam == hotkeyID {
 			toggle()
+		} else if app.ovPassive && isVisible() {
+			onScrollKey(wParam)
 		}
 		return 0
 	case wmTray:
@@ -1376,11 +1413,16 @@ func wndProc(hwnd uintptr, msg uintptr, wParam, lParam uintptr) uintptr {
 	case wmShowExisting:
 		showWindow()
 		return 0
+	case WM_ACTIVATE:
+		if wParam&0xFFFF == 0 { // WA_INACTIVE
+			onDeactivate(lParam)
+		}
 	case WM_CLOSE:
 		hideWindowHint(true)
 		return 0
 	case WM_DESTROY:
 		pUnregisterHotKey.Call(hwnd, hotkeyID)
+		scrollKeys(false)
 		removeTray()
 		pPostQuitMessage.Call(0)
 		return 0

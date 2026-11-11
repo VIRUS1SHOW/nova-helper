@@ -15,6 +15,8 @@ const (
 	idcAccent  = 201
 	idcOpacity = 202
 	idcAnim    = 203
+	idcOverlay = 204
+	idcOvOpac  = 205
 	idcProv    = 210
 	idcKey     = 211
 	idcFolder  = 212
@@ -25,6 +27,8 @@ const (
 	idcCancel  = 222
 
 	wmCheckDone = WM_APP + 20
+
+	dlgH = 770
 )
 
 var dlg struct {
@@ -36,6 +40,9 @@ var dlg struct {
 	resultColor                     uintptr
 	origAccent, origOpacity         int
 	origAnim                        bool
+	overlay, ovOpac, ovVal          uintptr
+	origOverlay, origCompact        bool
+	origOvOpacity                   int
 	checking                        bool
 	checkRes                        string
 	checkOK                         bool
@@ -67,9 +74,10 @@ func openSettings(message string) {
 		dlg.registered = true
 	}
 	dlg.origAccent, dlg.origOpacity, dlg.origAnim = app.accent, app.opacity, app.anim
+	dlg.origOverlay, dlg.origCompact, dlg.origOvOpacity = app.overlay, app.ovCompact, app.ovOpacity
 
 	style := uintptr(WS_CAPTION | WS_SYSMENU | WS_POPUP)
-	cw, ch := s(540), s(640)
+	cw, ch := s(540), s(dlgH)
 	rc := RECT{0, 0, cw, ch}
 	pAdjustWindowRectEx.Call(uintptr(unsafe.Pointer(&rc)), style, 0, 0)
 	w, h := rc.Right-rc.Left, rc.Bottom-rc.Top
@@ -180,7 +188,27 @@ func buildDialog() {
 	}
 	dlg.anim = combo(idcAnim, []string{"Включены — плавно", "Выключены — мгновенно"}, sel, fx, y, fw)
 
-	y += 60
+	y += 56
+	dlgHeader("РЕЖИМ ПОВЕРХ ИГРЫ", y)
+	y += 26
+	label("Поверх игры", lx, y, 140)
+	ovSel := 0
+	switch {
+	case !app.overlay:
+		ovSel = 2
+	case app.ovCompact:
+		ovSel = 1
+	}
+	dlg.overlay = combo(idcOverlay, []string{"Включён — игра не сворачивается", "Включён, компактно — без меню слева", "Выключен — обычное окно"}, ovSel, fx, y, fw)
+	y += 42
+	label("Прозрачность в игре", lx, y, 145)
+	dlg.ovOpac = ctl("msctls_trackbar32", "", WS_TABSTOP|TBS_HORZ|TBS_NOTICKS, fx-6, y+2, fw-56, 28, idcOvOpac, app.fDoc)
+	SendMessage(dlg.ovOpac, TBM_SETRANGE, 1, uintptr(30|100<<16))
+	SendMessage(dlg.ovOpac, TBM_SETPOS, 1, uintptr(app.ovOpacity))
+	dlg.ovVal = ctl("STATIC", strconv.Itoa(app.ovOpacity)+"%", SS_NOPREFIX|0x2, fx+fw-56, y+5, 56, 22, 0, app.fDoc)
+	dlg.labels = append(dlg.labels, dlg.ovVal)
+
+	y += 56
 	dlgHeader("ИИ — ВОПРОСЫ К ПРАВИЛАМ", y)
 	y += 26
 	var provs []string
@@ -217,8 +245,8 @@ func buildDialog() {
 	dlg.result = ctl("STATIC", "", SS_NOPREFIX, fx+132, y-2, fw-132, 48, 0, app.fSmall)
 	dlg.resultColor = clrMuted
 
-	button("Сохранить", idcSave, true, 540-24-120-8-110, 640-24-32, 120)
-	button("Отмена", idcCancel, false, 540-24-110, 640-24-32, 110)
+	button("Сохранить", idcSave, true, 540-24-120-8-110, dlgH-24-32, 120)
+	button("Отмена", idcCancel, false, 540-24-110, dlgH-24-32, 110)
 	onProviderChanged()
 }
 
@@ -320,6 +348,7 @@ func closeSettings(save bool) {
 			applyAccent(dlg.origAccent)
 		}
 		app.opacity, app.anim = dlg.origOpacity, dlg.origAnim
+		app.overlay, app.ovCompact, app.ovOpacity = dlg.origOverlay, dlg.origCompact, dlg.origOvOpacity
 		applyOpacity()
 	}
 	pDestroyWindow.Call(dlg.hwnd)
@@ -337,6 +366,9 @@ func dlgProc(hwnd uintptr, msg uintptr, wp, lp uintptr) uintptr {
 		case id == idcAccent && code == CBN_SELCHANGE:
 			applyAccent(int(SendMessage(dlg.accent, CB_GETCURSEL, 0, 0)))
 			pInvalidateRect.Call(hwnd, 0, 1)
+		case id == idcOverlay && code == CBN_SELCHANGE:
+			sel := SendMessage(dlg.overlay, CB_GETCURSEL, 0, 0)
+			app.overlay, app.ovCompact = sel != 2, sel == 1
 		case id == idcAnim && code == CBN_SELCHANGE:
 			app.anim = SendMessage(dlg.anim, CB_GETCURSEL, 0, 0) == 0
 			kickAnim()
@@ -352,6 +384,10 @@ func dlgProc(hwnd uintptr, msg uintptr, wp, lp uintptr) uintptr {
 		}
 		return 0
 	case WM_HSCROLL:
+		if lp == dlg.ovOpac {
+			app.ovOpacity = clampInt(int(SendMessage(dlg.ovOpac, TBM_GETPOS, 0, 0)), 30, 100)
+			pSetWindowTextW.Call(dlg.ovVal, u16p(strconv.Itoa(app.ovOpacity)+"%"))
+		}
 		if lp == dlg.opacity {
 			app.opacity = clampInt(int(SendMessage(dlg.opacity, TBM_GETPOS, 0, 0)), 40, 100)
 			pSetWindowTextW.Call(dlg.opVal, u16p(strconv.Itoa(app.opacity)+"%"))

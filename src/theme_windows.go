@@ -73,7 +73,7 @@ func applyAccent(i int) {
 
 // ---------------------------------------------------------------- прозрачность и появление
 
-func targetAlpha() int { return app.opacity * 255 / 100 }
+func targetAlpha() int { return ovTargetAlpha() }
 
 func applyOpacity() {
 	if app.fade == 0 {
